@@ -1,0 +1,18 @@
+            User Request (e.g., POST /api/register)
+                                   ↓
+        HAProxy (Centralized Load Balancer: Entry Point 80:80)
+                                   ↓
+        Apache API Gateway (Internal Router, e.g., apache-gateway:80)
+                                   ↓ (ProxyPassMatch "^/api/register")
+        Laravel (Registration Service)
+          - Receives registration request
+          - Validates data
+          - (1) Saves User Data to MySQL (mysql_db)
+          - (2) Publishes "user.registered" Event to Redis (redis_cache)
+                                   ↓
+        Redis (Message Broker: Handles "user.registered" event)
+                                   ↓
+        NestJS (NotificationSchema Service)
+          - (1) Subscribes to "user.registered" Event from Redis
+          - (2) Processes event (e.g., sends welcome email via external API - not shown)
+          - (3) Stores NotificationSchema Log/History in MongoDB (mongo_db)

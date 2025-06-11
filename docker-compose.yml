@@ -1,0 +1,131 @@
+services:
+  # Centralized Entry Point
+  haproxy-gateway:
+    build:
+      context: ./haproxy-gateway
+      dockerfile: Dockerfile
+
+    container_name: haproxy-gateway
+    ports:
+      - '81:80'
+    depends_on:
+      - laravel-registration-service
+    networks:
+      - app-network
+
+
+  #laravel Registration Service
+  laravel-registration-service:
+    build:
+      context: .
+      dockerfile: services/laravel-registration-service/Dockerfile
+    env_file:
+      - ./.env.docker
+    volumes:
+      - ./services/laravel-registration-service:/var/www
+    environment:
+      APP_DEBUG: ${APP_DEBUG}
+      APP_ENV: ${APP_ENV}
+      DB_HOST: mysql_db
+      DB_PORT: 3306
+      DB_DATABASE: ${MYSQL_DATABASE_REGISTRATION}
+      DB_USERNAME: ${MYSQL_USER}
+      DB_PASSWORD: ${MYSQL_PASSWORD}
+      REDIS_HOST: redis_cache
+      REDIS_PASSWORD: ${REDIS_PASSWORD}
+      REDIS_PORT: 6379
+    depends_on:
+      - mysql_db
+      - redis_cache
+    networks:
+      - app-network
+
+  # NestJS Notification Service
+  nestjs-notification-service:
+    build:
+      context: .
+      dockerfile: services/nestjs-notification-service/Dockerfile
+    env_file:
+      - ./.env.docker
+
+    volumes:
+      - ./services/nestjs-notification-service:/app
+    environment:
+      PORT: 3000
+      NODE_ENV: ${APP_ENV}
+      DEBUG: ${APP_DEBUG}
+      MONGO_URI: mongodb://mongo_db:27017/${MONGO_DATABASE_NOTIFICATIONS}
+      REDIS_HOST: redis_cache
+      REDIS_PORT: 6379
+      REDIS_PASSWORD: ${REDIS_PASSWORD}
+
+    command: >
+      sh -c "apk add --no-cache bash &&
+             chmod +x ./wait-for-it.sh &&
+             ./wait-for-it.sh mongo_db:27017 -- npm run start:dev"
+
+    depends_on:
+      mongo_db:
+        condition: service_healthy
+      redis_cache:
+        condition: service_started
+
+    networks:
+      - app-network
+
+  #MySQL Database
+  mysql_db:
+    image: mysql:8.0
+    env_file:
+      - ./.env.docker
+    command: --default-authentication-plugin=mysql_native_password
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      MYSQL_DATABASE: ${MYSQL_DATABASE_REGISTRATION}
+      MYSQL_USER: ${MYSQL_USER}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+    volumes:
+      - mysql_data:/var/lib/mysql
+      - ./database/mysql-init:/docker-entrypoint-initdb.d
+    networks:
+      - app-network
+
+  # MongoDB Database
+  mongo_db:
+    image: mongo:latest
+    env_file:
+      - ./.env.docker
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: ${MONGO_ROOT_USERNAME}
+      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_ROOT_PASSWORD}
+      MONGO_INITDB_DATABASE: admin
+
+    volumes:
+      - mongo_data:/data/db
+      - ./database/mongo-init:/docker-entrypoint-initdb.d
+    networks:
+      - app-network
+
+  #Redis Cache/Queue Broker
+  redis_cache:
+    image: redis:latest
+    env_file:
+      - ./.env.docker
+    command: redis-server --requirepass "${REDIS_PASSWORD}"
+    environment:
+      REDIS_PASSWORD: ${REDIS_PASSWORD}
+    volumes:
+      - redis_data:/data
+    networks:
+      - app-network
+
+# Define named volumes for persistent data
+volumes:
+  mysql_data:
+  mongo_data:
+  redis_data:
+
+# network where all services communicate
+networks:
+  app-network:
+    driver: bridge
