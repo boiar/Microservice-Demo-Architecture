@@ -1,28 +1,16 @@
 services:
-  # Centralized Entry Point
-  haproxy-gateway:
-    build:
-      context: ./haproxy-gateway
-      dockerfile: Dockerfile
 
-    container_name: haproxy-gateway
-    ports:
-      - '81:80'
-    depends_on:
-      - laravel-registration-service
-    networks:
-      - app-network
-
-
-  #laravel Registration Service
-  laravel-registration-service:
+  #laravel user Service
+  user-service:
     build:
       context: .
-      dockerfile: services/laravel-registration-service/Dockerfile
+      dockerfile: services/laravel-user-service/Dockerfile
     env_file:
       - ./.env.docker
     volumes:
-      - ./services/laravel-registration-service:/var/www
+      - ./services/laravel-user-service:/var/www
+    ports:
+      - "8000:8000"
     environment:
       APP_DEBUG: ${APP_DEBUG}
       APP_ENV: ${APP_ENV}
@@ -34,6 +22,8 @@ services:
       REDIS_HOST: redis_cache
       REDIS_PASSWORD: ${REDIS_PASSWORD}
       REDIS_PORT: 6379
+    command: >
+      sh -c "php artisan migrate --force && php artisan serve --host 0.0.0.0 --port 8000"
     depends_on:
       - mysql_db
       - redis_cache
@@ -41,7 +31,7 @@ services:
       - app-network
 
   # NestJS Notification Service
-  nestjs-notification-service:
+  notification-service:
     build:
       context: .
       dockerfile: services/nestjs-notification-service/Dockerfile
@@ -50,6 +40,8 @@ services:
 
     volumes:
       - ./services/nestjs-notification-service:/app
+    ports:
+      - "3001:3000"
     environment:
       PORT: 3000
       NODE_ENV: ${APP_ENV}
@@ -73,6 +65,69 @@ services:
     networks:
       - app-network
 
+
+  # NestJS Product Service
+  product-service:
+    build:
+      context: .
+      dockerfile: services/nestjs-product-service/Dockerfile
+    env_file:
+      - ./.env.docker
+    volumes:
+      - ./services/nestjs-product-service:/app
+    ports:
+      - "3002:3000"
+    environment:
+      PORT: 3000
+      NODE_ENV: ${APP_ENV}
+      DEBUG: ${APP_DEBUG}
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      MYSQL_HOST: mysql_product
+      MYSQL_PORT: 3306
+      MYSQL_USER: root
+      MYSQL_PASSWORD: root
+      MYSQL_DATABASE: product_db
+    command: >
+      sh -c "apk add --no-cache bash &&
+             chmod +x ./wait-for-it.sh &&
+             ./wait-for-it.sh mysql_product:3306 -- npm run start:dev"
+    depends_on:
+      mysql_product:
+        condition: service_healthy
+      redis_cache:
+        condition: service_started
+    networks:
+      - app-network
+
+
+  # MySQL for Product Service
+  mysql_product:
+    image: mysql:8.0
+    env_file:
+      - ./.env.docker
+    command: --default-authentication-plugin=mysql_native_password
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      MYSQL_DATABASE: ${MYSQL_DATABASE_PRODUCT}
+      MYSQL_USER: ${MYSQL_USER}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+    volumes:
+      - mysql_product_data:/var/lib/mysql
+      - ./database/mysql-product-init:/docker-entrypoint-initdb.d
+    healthcheck:
+      test: [ "CMD", "mysqladmin", "ping", "-h", "localhost", "-uroot", "-p${MYSQL_ROOT_PASSWORD}" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+
+    networks:
+      - app-network
+
+
+
+
   #MySQL Database
   mysql_db:
     image: mysql:8.0
@@ -85,8 +140,8 @@ services:
       MYSQL_USER: ${MYSQL_USER}
       MYSQL_PASSWORD: ${MYSQL_PASSWORD}
     volumes:
-      - mysql_data:/var/lib/mysql
-      - ./database/mysql-init:/docker-entrypoint-initdb.d
+      - mysql_user_data:/var/lib/mysql
+      - ./database/mysql-user-init:/docker-entrypoint-initdb.d
     networks:
       - app-network
 
@@ -102,7 +157,14 @@ services:
 
     volumes:
       - mongo_data:/data/db
-      - ./database/mongo-init:/docker-entrypoint-initdb.d
+      - ./database/mongo-notification-init:/docker-entrypoint-initdb.d
+    healthcheck:
+      test: [ "CMD", "bash", "-c", "echo > /dev/tcp/localhost/27017" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
     networks:
       - app-network
 
@@ -121,7 +183,8 @@ services:
 
 # Define named volumes for persistent data
 volumes:
-  mysql_data:
+  mysql_user_data:
+  mysql_product_data:
   mongo_data:
   redis_data:
 

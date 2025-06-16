@@ -26,13 +26,13 @@ COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 WORKDIR /var/www
 
 # Copy composer files first
-COPY services/laravel-registration-service/composer.json services/laravel-registration-service/composer.lock ./
+COPY services/laravel-user-service/composer.json services/laravel-user-service/composer.lock ./
 
 # Install dependencies
 RUN composer install --no-dev --optimize-autoloader --no-scripts
 
 # Copy the rest of the Laravel application
-COPY services/laravel-registration-service/ .
+COPY services/laravel-user-service/ .
 
 # Set permissions
 RUN chown -R www-data:www-data /var/www/storage \

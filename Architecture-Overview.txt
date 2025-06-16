@@ -16,3 +16,18 @@
           - (1) Subscribes to "user.registered" Event from Redis
           - (2) Processes event (e.g., sends welcome email via external API - not shown)
           - (3) Stores NotificationSchema Log/History in MongoDB (mongo_db)
+
+
+
+
+project-structure/
+├── docker-compose.yml                   # The central orchestration file for all your services.
+├── .env.docker                          # Environment variables specific to your Docker setup (e.g., ports, network names, shared secrets).
+├── .services                            # A dedicated directory to house the source code for each of your microservices.
+│   ├── laravel-user-service             # A Laravel microservice, likely handling user authentication, profiles, etc.
+│   ├── nest-product-service             # A NestJS microservice for managing products.
+│   └── nest-notification-service        # Another NestJS microservice for handling notifications (e.g., emails, push notifications).
+└── database                             # Directory for database-related configurations or initialization scripts.
+    ├── mongo-notification-init          # Likely a script or configuration for initializing the MongoDB database used by the notification service.
+    ├── mysql-product-init               # Likely a script or configuration for initializing the MySQL database used by the product service.
+    └── mysql-user-init                  # Likely a script or configuration for initializing the MySQL database used by the user service.
