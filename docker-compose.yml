@@ -1,6 +1,6 @@
 services:
 
-  #laravel user Service
+  #Laravel User Service
   user-service:
     build:
       context: .
@@ -101,6 +101,38 @@ services:
       - app-network
 
 
+
+  #Laravel Order Service
+  order-service:
+    build:
+      context: .
+      dockerfile: services/laravel-order-service/Dockerfile
+    env_file:
+      - ./.env.docker
+    volumes:
+      - ./services/laravel-order-service:/var/www
+    ports:
+      - "8001:8000"
+    environment:
+      APP_DEBUG: ${APP_DEBUG}
+      APP_ENV: ${APP_ENV}
+      DB_HOST: mysql_order
+      DB_PORT: 3306
+      DB_DATABASE: ${MYSQL_DATABASE_ORDER}
+      DB_USERNAME: ${MYSQL_USER}
+      DB_PASSWORD: ${MYSQL_PASSWORD}
+      REDIS_HOST: redis_cache
+      REDIS_PASSWORD: ${REDIS_PASSWORD}
+      REDIS_PORT: 6379
+    command: >
+      sh -c "php artisan migrate --force && php artisan serve --host 0.0.0.0 --port 8000"
+    depends_on:
+      - mysql_order
+      - redis_cache
+    networks:
+      - app-network
+
+
   # MySQL for Product Service
   mysql_product:
     image: mysql:8.0
@@ -127,6 +159,29 @@ services:
 
 
 
+  # MySQL for Order Service
+  mysql_order:
+    image: mysql:8.0
+    env_file:
+      - ./.env.docker
+    command: --default-authentication-plugin=mysql_native_password
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      MYSQL_DATABASE: ${MYSQL_DATABASE_ORDER}
+      MYSQL_USER: ${MYSQL_USER}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+    volumes:
+      - mysql_order_data:/var/lib/mysql
+      - ./database/mysql-order-init:/docker-entrypoint-initdb.d
+    healthcheck:
+      test: [ "CMD", "mysqladmin", "ping", "-h", "localhost", "-uroot", "-p${MYSQL_ROOT_PASSWORD}" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+    networks:
+      - app-network
+
 
   #MySQL Database
   mysql_db:
@@ -145,7 +200,7 @@ services:
     networks:
       - app-network
 
-  # MongoDB Database
+  # MongoDB Notification Database
   mongo_db:
     image: mongo:latest
     env_file:
@@ -185,6 +240,7 @@ services:
 volumes:
   mysql_user_data:
   mysql_product_data:
+  mysql_order_data:
   mongo_data:
   redis_data:
 

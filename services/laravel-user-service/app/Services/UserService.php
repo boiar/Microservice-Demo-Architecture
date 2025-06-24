@@ -26,11 +26,19 @@ class UserService
 
         $newToken = JwtHelper::generateToken($user);
 
-        // publish user registered event
-        Redis::publish('user.updated_profile', json_encode([
-           'token'     => $newToken,
-           'timestamp' => now()->toDateTimeString(),
-        ]));
+        \Log::info('[AuthService] About to publish user.updated event');
+
+        // publish user updated event
+        Redis::publish('user-events', json_encode([
+              'event'     => 'user.updated',
+              'timestamp' => now()->toDateTimeString(),
+              'token'     => $newToken,
+              'data' => [
+                  'id'    => $user->id,
+                  'name'  => $user->name,
+                  'email' => $user->email,
+              ],
+        ]));;
 
 
         return ResponseHelper::returnData(['user' => $user], 200, 'Profile updated successfully');

@@ -14,7 +14,7 @@ class JwtHelper
             'iss' => "app-jwt-token",
             'sub' => $user->id,
             'iat' => time(),
-            'exp' => time() + config('jwt.ttl', 3600),
+            'exp' => time() + config('jwt.ttl', 7200),
             'user' => [
                 'id' => $user->id,
                 'name' => $user->name,

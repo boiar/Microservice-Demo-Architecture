@@ -1,0 +1,8 @@
+CREATE DATABASE IF NOT EXISTS `order_db`;
+
+CREATE USER IF NOT EXISTS 'root'@'%' IDENTIFIED BY 'root';
+GRANT ALL PRIVILEGES ON `order_db`.* TO 'root'@'%';
+FLUSH PRIVILEGES;
+
+
+USE `order_db`;

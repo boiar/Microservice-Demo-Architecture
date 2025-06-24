@@ -6,8 +6,8 @@ use App\Helpers\JwtHelper;
 use App\Helpers\ResponseHelper;
 use Closure;
 use Illuminate\Http\Request;
-use Symfony\Component\HttpFoundation\Response;
 use Illuminate\Support\Facades\Auth;
+use Symfony\Component\HttpFoundation\Response;
 
 class JwtAuthMiddleware
 {

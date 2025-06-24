@@ -3,6 +3,7 @@ namespace App\Http\Controllers\API;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\LoginRequest;
+use App\Http\Requests\AddItemsToCartRequest;
 use App\Http\Requests\RegisterRequest;
 use App\Services\AuthService;
 
@@ -22,8 +23,7 @@ class AuthController extends Controller
 
     public function register(RegisterRequest $request): object
     {
-        $dto = $request->getDto();
-        return $this->authService->register($dto);
+        return $this->authService->register($request->getDto());
     }
 
     public function login(LoginRequest $request): object

@@ -5,16 +5,15 @@
 namespace App\Services;
 
 use App\DTOs\LoginUserDTO;
+use App\DTOs\RegisterUserDTO;
 use App\Helpers\JwtHelper;
 use App\Helpers\ResponseHelper;
 use App\Models\User;
-use App\DTOs\RegisterUserDTO;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Redis;
-use Illuminate\Support\Facades\Cache;
-use Illuminate\Support\Facades\Auth;
-use Illuminate\Http\Request;
-
 
 
 class AuthService
@@ -32,12 +31,23 @@ class AuthService
         $refreshToken = JwtHelper::generateRefreshToken($user->id);
         Cache::put("refresh_{$refreshToken}", $user->id, now()->addDays(7));
 
+
+        \Log::info('[AuthService] About to publish user.registered event');
+
+
         // publish user registered event
-        Redis::publish('user.registered', json_encode([
-              'token'     => $token,
+        $result = Redis::publish('user-events', json_encode([
               'event'     => 'user.registered',
               'timestamp' => now()->toDateTimeString(),
+              'token'     => $token,
+              'data' => [
+                  'id'    => $user->id,
+                  'name'  => $user->name,
+                  'email' => $user->email,
+              ],
         ]));
+
+        \Log::info("[AuthService] Redis publish result: $result");
 
         $data = [
             'user'          => $user,
