@@ -26,6 +26,7 @@ project-structure/
 ├── .services                            # A dedicated directory to house the source code for each of your microservices.
 │   ├── laravel-user-service             # A Laravel microservice, likely handling user authentication, profiles, etc.
 │   ├── nest-product-service             # A NestJS microservice for managing products.
+|   ├── laravel-order-service            # A Laravel microservice for users orders.
 │   └── nest-notification-service        # Another NestJS microservice for handling notifications (e.g., emails, push notifications).
 └── database                             # Directory for database-related configurations or initialization scripts.
     ├── mongo-notification-init          # Likely a script or configuration for initializing the MongoDB database used by the notification service.
