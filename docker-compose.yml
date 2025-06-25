@@ -81,8 +81,9 @@ services:
       PORT: 3000
       NODE_ENV: ${APP_ENV}
       DEBUG: ${APP_DEBUG}
-      REDIS_HOST: redis
+      REDIS_HOST: redis_cache
       REDIS_PORT: 6379
+      REDIS_PASSWORD: ${REDIS_PASSWORD}
       MYSQL_HOST: mysql_product
       MYSQL_PORT: 3306
       MYSQL_USER: root

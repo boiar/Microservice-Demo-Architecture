@@ -74,4 +74,20 @@ class JwtHelper
         }
     }
 
+    public static function getUserFromToken(): ?array
+    {
+        $token = request()->bearerToken();
+
+        if (!$token) {
+            return null;
+        }
+
+        try {
+            $decoded = JWT::decode($token, new Key(env('JWT_SECRET'), 'HS256'));
+            return (array) ($decoded->user ?? null);
+        } catch (\Exception $e) {
+            return null;
+        }
+    }
+
 }

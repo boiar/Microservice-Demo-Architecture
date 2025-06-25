@@ -48,18 +48,19 @@ class OrderService
 
     public function createOrder(CreateOrderDTO $dto): ?object
     {
-        $userId = JwtHelper::getUserIdFromToken();
+        $user = JwtHelper::getUserFromToken();
 
-        $cartItems = Cart::where('user_id', $userId)->get();
+
+        $cartItems = Cart::where('user_id', $user['id'])->get();
 
         if ($cartItems->isEmpty()) {
              return ResponseHelper::returnError(400, "Cart is empty");
         }
 
-        return DB::transaction(function () use ($dto, $userId, $cartItems) {
+        return DB::transaction(function () use ($dto, $user, $cartItems) {
 
             $order = Order::create([
-               'user_id' => $userId,
+               'user_id' => $user['id'],
                'address' => $dto->getAddress(),
                'note'    => $dto->getNotes(),
                'status'  => Order::STATUS_PENDING,
@@ -105,8 +106,9 @@ class OrderService
             $order->update(['total_price' => $totalPrice]);
 
             Redis::publish('order-events', json_encode([
-               'event' => 'order.created',
-                'user_id' => $userId,
+                'event' => 'order.created',
+                'user_id' => $user['id'] ?? null,
+                'user_email' => $user['email'] ?? null,
                 'order_id' => $order->id,
                 'products' => collect($data)->map(fn($item) => [
                     'product_id' => $item['product_id'],
@@ -114,7 +116,7 @@ class OrderService
                 ])->toArray(),
             ]));
 
-            Cart::where('user_id', $userId)->delete();
+            Cart::where('user_id', $user['id'])->delete();
 
             return ResponseHelper::returnData([
               'order' => $order->fresh(),
