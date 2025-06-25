@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use app\Contracts\IUser;
 use App\DTOs\UpdateUserProfileDTO;
 use App\Helpers\JwtHelper;
 use App\Helpers\ResponseHelper;
@@ -9,7 +10,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Redis;
 
-class UserService
+class UserService implements IUser
 {
 
     public function updateProfile(UpdateUserProfileDTO $dto): object

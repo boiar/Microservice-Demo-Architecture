@@ -4,6 +4,7 @@
 
 namespace App\Services;
 
+use App\Contracts\IAuth;
 use App\DTOs\LoginUserDTO;
 use App\DTOs\RegisterUserDTO;
 use App\Helpers\JwtHelper;
@@ -16,7 +17,7 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Redis;
 
 
-class AuthService
+class AuthService implements IAuth
 {
     public function register(RegisterUserDTO $dto): object
     {
