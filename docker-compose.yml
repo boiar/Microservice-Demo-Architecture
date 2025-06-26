@@ -1,243 +1,18 @@
-services:
 
-  #Laravel User Service
-  user-service:
-    build:
-      context: .
-      dockerfile: services/laravel-user-service/Dockerfile
-    env_file:
-      - ./.env.docker
-    volumes:
-      - ./services/laravel-user-service:/var/www
-    ports:
-      - "8000:8000"
-    environment:
-      APP_DEBUG: ${APP_DEBUG}
-      APP_ENV: ${APP_ENV}
-      DB_HOST: mysql_db
-      DB_PORT: 3306
-      DB_DATABASE: ${MYSQL_DATABASE_REGISTRATION}
-      DB_USERNAME: ${MYSQL_USER}
-      DB_PASSWORD: ${MYSQL_PASSWORD}
-      REDIS_HOST: redis_cache
-      REDIS_PASSWORD: ${REDIS_PASSWORD}
-      REDIS_PORT: 6379
-    command: >
-      sh -c "php artisan migrate --force && php artisan serve --host 0.0.0.0 --port 8000"
-    depends_on:
-      - mysql_db
-      - redis_cache
-    networks:
-      - app-network
+services: {}
 
-  # NestJS Notification Service
-  notification-service:
-    build:
-      context: .
-      dockerfile: services/nestjs-notification-service/Dockerfile
-    env_file:
-      - ./.env.docker
-
-    volumes:
-      - ./services/nestjs-notification-service:/app
-    ports:
-      - "3001:3000"
-    environment:
-      PORT: 3000
-      NODE_ENV: ${APP_ENV}
-      DEBUG: ${APP_DEBUG}
-      MONGO_URI: mongodb://mongo_db:27017/${MONGO_DATABASE_NOTIFICATIONS}
-      REDIS_HOST: redis_cache
-      REDIS_PORT: 6379
-      REDIS_PASSWORD: ${REDIS_PASSWORD}
-
-    command: >
-      sh -c "apk add --no-cache bash &&
-             chmod +x ./wait-for-it.sh &&
-             ./wait-for-it.sh mongo_db:27017 -- npm run start:dev"
-
-    depends_on:
-      mongo_db:
-        condition: service_healthy
-      redis_cache:
-        condition: service_started
-
-    networks:
-      - app-network
+include:
+  - ./docker/user-service.yml
+  - ./docker/order-service.yml
+  - ./docker/product-service.yml
+  - ./docker/notification-service.yml
+  - ./docker/databases/mysql-user.yml
+  - ./docker/databases/mysql-product.yml
+  - ./docker/databases/mysql-order.yml
+  - ./docker/databases/mongo-notification.yml
+  - ./docker/databases/redis.yml
 
 
-  # NestJS Product Service
-  product-service:
-    build:
-      context: .
-      dockerfile: services/nestjs-product-service/Dockerfile
-    env_file:
-      - ./.env.docker
-    volumes:
-      - ./services/nestjs-product-service:/app
-    ports:
-      - "3002:3000"
-    environment:
-      PORT: 3000
-      NODE_ENV: ${APP_ENV}
-      DEBUG: ${APP_DEBUG}
-      REDIS_HOST: redis_cache
-      REDIS_PORT: 6379
-      REDIS_PASSWORD: ${REDIS_PASSWORD}
-      MYSQL_HOST: mysql_product
-      MYSQL_PORT: 3306
-      MYSQL_USER: root
-      MYSQL_PASSWORD: root
-      MYSQL_DATABASE: product_db
-    command: >
-      sh -c "apk add --no-cache bash &&
-             chmod +x ./wait-for-it.sh &&
-             ./wait-for-it.sh mysql_product:3306 -- npm run start:dev"
-    depends_on:
-      mysql_product:
-        condition: service_healthy
-      redis_cache:
-        condition: service_started
-    networks:
-      - app-network
-
-
-
-  #Laravel Order Service
-  order-service:
-    build:
-      context: .
-      dockerfile: services/laravel-order-service/Dockerfile
-    env_file:
-      - ./.env.docker
-    volumes:
-      - ./services/laravel-order-service:/var/www
-    ports:
-      - "8001:8000"
-    environment:
-      APP_DEBUG: ${APP_DEBUG}
-      APP_ENV: ${APP_ENV}
-      DB_HOST: mysql_order
-      DB_PORT: 3306
-      DB_DATABASE: ${MYSQL_DATABASE_ORDER}
-      DB_USERNAME: ${MYSQL_USER}
-      DB_PASSWORD: ${MYSQL_PASSWORD}
-      REDIS_HOST: redis_cache
-      REDIS_PASSWORD: ${REDIS_PASSWORD}
-      REDIS_PORT: 6379
-    command: >
-      sh -c "php artisan migrate --force && php artisan serve --host 0.0.0.0 --port 8000"
-    depends_on:
-      - mysql_order
-      - redis_cache
-    networks:
-      - app-network
-
-
-  # MySQL for Product Service
-  mysql_product:
-    image: mysql:8.0
-    env_file:
-      - ./.env.docker
-    command: --default-authentication-plugin=mysql_native_password
-    environment:
-      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
-      MYSQL_DATABASE: ${MYSQL_DATABASE_PRODUCT}
-      MYSQL_USER: ${MYSQL_USER}
-      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
-    volumes:
-      - mysql_product_data:/var/lib/mysql
-      - ./database/mysql-product-init:/docker-entrypoint-initdb.d
-    healthcheck:
-      test: [ "CMD", "mysqladmin", "ping", "-h", "localhost", "-uroot", "-p${MYSQL_ROOT_PASSWORD}" ]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-      start_period: 20s
-
-    networks:
-      - app-network
-
-
-
-  # MySQL for Order Service
-  mysql_order:
-    image: mysql:8.0
-    env_file:
-      - ./.env.docker
-    command: --default-authentication-plugin=mysql_native_password
-    environment:
-      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
-      MYSQL_DATABASE: ${MYSQL_DATABASE_ORDER}
-      MYSQL_USER: ${MYSQL_USER}
-      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
-    volumes:
-      - mysql_order_data:/var/lib/mysql
-      - ./database/mysql-order-init:/docker-entrypoint-initdb.d
-    healthcheck:
-      test: [ "CMD", "mysqladmin", "ping", "-h", "localhost", "-uroot", "-p${MYSQL_ROOT_PASSWORD}" ]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-      start_period: 20s
-    networks:
-      - app-network
-
-
-  #MySQL Database
-  mysql_db:
-    image: mysql:8.0
-    env_file:
-      - ./.env.docker
-    command: --default-authentication-plugin=mysql_native_password
-    environment:
-      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
-      MYSQL_DATABASE: ${MYSQL_DATABASE_REGISTRATION}
-      MYSQL_USER: ${MYSQL_USER}
-      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
-    volumes:
-      - mysql_user_data:/var/lib/mysql
-      - ./database/mysql-user-init:/docker-entrypoint-initdb.d
-    networks:
-      - app-network
-
-  # MongoDB Notification Database
-  mongo_db:
-    image: mongo:latest
-    env_file:
-      - ./.env.docker
-    environment:
-      MONGO_INITDB_ROOT_USERNAME: ${MONGO_ROOT_USERNAME}
-      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_ROOT_PASSWORD}
-      MONGO_INITDB_DATABASE: admin
-
-    volumes:
-      - mongo_data:/data/db
-      - ./database/mongo-notification-init:/docker-entrypoint-initdb.d
-    healthcheck:
-      test: [ "CMD", "bash", "-c", "echo > /dev/tcp/localhost/27017" ]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-      start_period: 10s
-
-    networks:
-      - app-network
-
-  #Redis Cache/Queue Broker
-  redis_cache:
-    image: redis:latest
-    env_file:
-      - ./.env.docker
-    command: redis-server --requirepass "${REDIS_PASSWORD}"
-    environment:
-      REDIS_PASSWORD: ${REDIS_PASSWORD}
-    volumes:
-      - redis_data:/data
-    networks:
-      - app-network
-
-# Define named volumes for persistent data
 volumes:
   mysql_user_data:
   mysql_product_data:
@@ -245,7 +20,11 @@ volumes:
   mongo_data:
   redis_data:
 
+
 # network where all services communicate
 networks:
   app-network:
     driver: bridge
+
+
+

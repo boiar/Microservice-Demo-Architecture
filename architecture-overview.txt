@@ -15,3 +15,6 @@ project-structure/
     ├── mongo-notification-init          # Likely a script or configuration for initializing the MongoDB database used by the notification service.
     ├── mysql-product-init               # Likely a script or configuration for initializing the MySQL database used by the product service.
     └── mysql-user-init                  # Likely a script or configuration for initializing the MySQL database used by the user service.
+
+
+

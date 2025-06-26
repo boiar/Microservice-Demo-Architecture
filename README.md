@@ -69,6 +69,88 @@ Services communicate asynchronously using Redis Pub/Sub. The architecture is ful
 
 ---
 
+
+## Run Project Steps
+
+Follow these steps to bring up microservices. Ensure you are in the root directory of your project (where your docker and micro-services folders reside) when executing the cd commands for each step.
+
+
+
+**1. Create the External Network**
+
+- All your services rely on a shared external network for communication. You only need to create this network once.
+
+```bash
+docker network create app-network
+```
+
+**2. Run Redis Service**
+
+- Redis is a shared dependency. Start its stack first.
+
+```bash
+cd micro-services/shared
+
+docker compose -f redis-stack.yml --env-file docker.env up -d --build
+
+cd ../..   # Return to project root
+
+```
+
+**3. Run User Service**
+
+- Start the Laravel User Service and its dedicated MySQL database.
+
+```bash
+cd micro-services/laravel-user-service
+
+docker compose -f user-stack.yml --env-file docker.env up -d --build
+
+cd ../..   # Return to project root
+```
+
+**4. Run Product Service**
+- Start the NestJS Product Service and its dedicated MySQL database.
+
+```bash
+cd micro-services/nestjs-product-service
+
+docker compose -f product-stack.yml --env-file docker.env up -d --build
+
+cd ../..   # Return to project root
+
+```
+
+
+**5. Run Order Service**
+- Start the Laravel Order Service and its dedicated MySQL database.
+
+```bash
+cd micro-services/laravel-order-service
+
+docker compose -f order-stack.yml --env-file docker.env up -d --build
+
+cd ../..   # Return to project root
+```
+
+
+
+**6. Run Notification Service**
+- Start the NestJS Notification Service and its dedicated MongoDB database.
+
+```bash
+cd micro-services/nestjs-notification-service
+
+docker compose -f notification-stack.yml --env-file docker.env up -d --build
+
+cd ../..   # Return to project root
+
+```
+
+
+
+
+---
 ## Tools & Technologies
 
 - **Laravel**
