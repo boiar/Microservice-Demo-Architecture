@@ -1,0 +1,21 @@
+services:
+  # Redis Cache/Queue Broker
+  redis-cache:
+    image: redis:latest
+    env_file:
+      - docker.env
+    command: redis-server --requirepass "${REDIS_PASSWORD}"
+    environment:
+      REDIS_PASSWORD: ${REDIS_PASSWORD}
+    volumes:
+      - redis_data:/data
+    networks:
+      - app-network
+
+volumes:
+  redis_data:
+
+
+networks:
+  app-network:
+    external: true

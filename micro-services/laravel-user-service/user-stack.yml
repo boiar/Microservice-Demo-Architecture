@@ -1,0 +1,58 @@
+
+services:
+  # Laravel User Service
+  user-service:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    env_file:
+      - docker.env
+    volumes:
+      - .:/var/www
+    ports:
+      - "8000:8000"
+    environment:
+      APP_DEBUG: ${APP_DEBUG}
+      APP_ENV: ${APP_ENV}
+      DB_HOST: mysql_db
+      DB_PORT: 3306
+      DB_DATABASE: ${MYSQL_DATABASE_REGISTRATION}
+      DB_USERNAME: ${MYSQL_USER}
+      DB_PASSWORD: ${MYSQL_PASSWORD}
+      REDIS_HOST: ${REDIS_HOST}
+      REDIS_PASSWORD: ${REDIS_PASSWORD}
+      REDIS_PORT: ${REDIS_PORT}
+    command: >
+      sh -c "php artisan migrate --force && php artisan serve --host 0.0.0.0 --port 8000"
+    networks:
+      - app-network
+
+  # MySQL Database for User Service (registration database)
+  mysql_db:
+    image: mysql:8.0
+    env_file:
+      - docker.env
+    command: --default-authentication-plugin=mysql_native_password
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      MYSQL_DATABASE: ${MYSQL_DATABASE_REGISTRATION}
+      MYSQL_USER: ${MYSQL_USER}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+    volumes:
+      - mysql_user_data:/var/lib/mysql
+      - ./init.sql:/docker-entry-point-initdb.d/init.sql
+    healthcheck:
+      test: [ "CMD", "mysqladmin", "ping", "-h", "localhost", "-uroot", "-p${MYSQL_ROOT_PASSWORD}" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+    networks:
+      - app-network
+
+volumes:
+  mysql_user_data:
+
+networks:
+  app-network:
+    external: true

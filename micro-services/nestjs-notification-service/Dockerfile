@@ -3,12 +3,12 @@ FROM node:20-alpine AS builder
 WORKDIR /app
 
 # Copy package.json and package-lock.json to install dependencies first
-COPY services/nestjs-notification-service/package*.json ./
+COPY package*.json ./
 
 RUN npm install
 
 # Copy the rest of the application source code
-COPY services/nestjs-notification-service/ .
+COPY . .
 
 # Build the NestJS application
 RUN npm run build
@@ -26,6 +26,6 @@ COPY --from=builder /app/node_modules ./node_modules
 EXPOSE 3000
 CMD ["node", "dist/main"]
 
-COPY services/nestjs-notification-service/wait-for-it.sh /usr/bin/wait-for-it
+COPY wait-for-it.sh /usr/bin/wait-for-it
 RUN chmod +x /usr/bin/wait-for-it
 SHELL ["/bin/sh", "-c"]

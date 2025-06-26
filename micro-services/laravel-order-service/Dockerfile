@@ -26,13 +26,13 @@ COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 WORKDIR /var/www
 
 # Copy composer files first
-COPY services/laravel-order-service/composer.json services/laravel-order-service/composer.lock ./
+COPY composer.json composer.lock ./
 
 # Install dependencies
 RUN composer install --no-dev --optimize-autoloader --no-scripts
 
 # Copy the rest of the Laravel application
-COPY services/laravel-order-service/ .
+COPY . .
 
 # Set permissions
 RUN chown -R www-data:www-data /var/www/storage \

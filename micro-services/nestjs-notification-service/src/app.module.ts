@@ -7,15 +7,18 @@ import { MongooseModule, MongooseModuleOptions } from '@nestjs/mongoose';
 
 @Module({
     imports: [
-        ConfigModule.forRoot({ isGlobal: true }),
+        ConfigModule.forRoot({ isGlobal: true, envFilePath: '.env' }),
 
         MongooseModule.forRootAsync({
             imports: [ConfigModule],
             inject: [ConfigService],
-            useFactory: async (config: ConfigService): Promise<MongooseModuleOptions> => ({
-                uri: config.get<string>('MONGO_URI'),
-            }),
+            useFactory: async (config: ConfigService): Promise<MongooseModuleOptions> => {
+                const uri = config.get<string>('MONGO_DB_URI');
+                console.log('📌 Mongo URI:', uri); // Add this line
+                return { uri };
+            }
         }),
+
 
         NotificationsModule,
     ],

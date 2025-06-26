@@ -1,0 +1,58 @@
+version: "3.9"
+
+services:
+  # MongoDB Notification Database
+  mongo_db:
+    image: mongo:latest
+    env_file:
+      - docker.env
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: ${MONGO_ROOT_USERNAME}
+      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_ROOT_PASSWORD}
+      MONGO_INITDB_DATABASE: ${MONGO_INITDB_DATABASE}
+    volumes:
+      - mongo_notification_data:/data/db
+      - ./init.sql:/docker-entry-point-initdb.d/init.js
+    healthcheck:
+      test: [ "CMD", "bash", "-c", "echo > /dev/tcp/localhost/27017" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    networks:
+      - app-network
+
+  # NestJS Notification Service
+  notification-service:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    env_file:
+      - docker.env
+    volumes:
+      - .:/app
+    ports:
+      - "3001:3000"
+    environment:
+      PORT: 3000
+      NODE_ENV: ${APP_ENV}
+      DEBUG: ${APP_DEBUG}
+      MONGO_URI: ${MONGO_URI}
+      REDIS_HOST: ${REDIS_HOST}
+      REDIS_PORT: ${REDIS_PORT}
+      REDIS_PASSWORD: ${REDIS_PASSWORD}
+    command: >
+      sh -c "apk add --no-cache bash &&
+             chmod +x ./wait-for-it.sh &&
+             ./wait-for-it.sh mongo_db:27017 -- npm run start:dev"
+    networks:
+      - app-network
+
+
+
+volumes:
+  mongo_notification_data:
+
+networks:
+  app-network:
+    external: true
