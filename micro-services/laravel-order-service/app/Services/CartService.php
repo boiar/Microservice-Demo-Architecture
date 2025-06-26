@@ -7,20 +7,15 @@ use App\Helpers\JwtHelper;
 use App\Helpers\ResponseHelper;
 use App\Models\Cart;
 use App\Models\Product;
-use Illuminate\Support\Facades\Http;
-use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Log;
-use Exception;
+use App\Contracts\ICart;
 
-class CartService
+
+class CartService implements ICart
 {
-
-
 
     public function getCartItems(): object
     {
         $cartItems = collect(Cart::getCartItems())->toArray();
-
         return ResponseHelper::returnData($cartItems);
     }
 
@@ -28,7 +23,6 @@ class CartService
     public function addToCart(AddItemToCartDTO $dto): ?object
     {
         $product = Product::where('id', $dto->getProductId())->first();
-
         if(!is_object($product)){
             return ResponseHelper::returnError(404, 'Invalid Product');
         }
@@ -40,6 +34,19 @@ class CartService
         $existingItem = Cart::where('user_id', $userId)
                             ->where('product_id', $dto->getProductId())
                             ->first();
+
+
+        $requestedQty = $dto->getQuantity();
+        // Calculate total quantity
+        $currentQtyInCart = $existingItem ? $existingItem->quantity : 0;
+        $totalQty = $currentQtyInCart + $requestedQty;
+
+        // Check against product available quantity
+        if ($totalQty > $product->available_quantity) {
+            return ResponseHelper::returnError(400, 'Quantity exceeds available stock.');
+        }
+
+
 
         if ($existingItem) {
             // Update qty
