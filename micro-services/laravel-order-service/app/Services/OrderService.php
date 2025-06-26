@@ -3,6 +3,7 @@
 
 namespace App\Services;
 
+use App\Contracts\IOrder;
 use App\DTOs\CreateOrderDTO;
 use App\Helpers\JwtHelper;
 use App\Helpers\ResponseHelper;
@@ -13,7 +14,7 @@ use App\Models\Product;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Redis;
 
-class OrderService
+class OrderService implements IOrder
 {
 
     public function getUserOrders(): object

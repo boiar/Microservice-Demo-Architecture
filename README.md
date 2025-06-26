@@ -2,7 +2,22 @@
 
 ![Microservice Architecture](./project.png)
 
-A containerized, event-driven microservices architecture that decouples user, product, order, and notification domains. Built with Laravel and NestJS, designed for scalability, modularity, and ease of testing.
+A containerized, event-driven microservices architecture that decouples user, product, order, and notification domains. Built with Laravel and NestJS,
+designed for scalability, modularity, and ease of testing.
+---
+
+
+Table of contents
+=================
+
+* [Project Overview](#project-overview)
+* [Project Structure](#project-structure)
+* [Business Logic by Service](#business-logic-by-service)
+* [Key Features](#key-features)
+* [Run Project Steps](#run-project-steps)
+* [Tools & Technologies](#tools--technologies)
+* [License](#license)
+
 
 ---
 
@@ -182,3 +197,8 @@ cd ../..   # Return to project root
 - **Jest** – Unit testing for NestJS services
 - **Postman** – API exploration and testing
 
+---
+
+## License
+
+This project is licensed under the [MIT License](./LICENSE).
