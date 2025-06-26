@@ -19,6 +19,25 @@ Services communicate asynchronously using Redis Pub/Sub. The architecture is ful
 
 ---
 
+## project-structure
+
+```bash
+
+├── micro-services/                    # Contains all individual microservice folders.
+│   ├── laravel-user-service/          # Laravel service responsible for user management and authentication.
+│   ├── laravel-order-service/         # Laravel service handling user orders and order processing.
+│   ├── nest-product-service/          # NestJS service for product-related operations.
+│   └── nest-notification-service/     # NestJS service for managing notifications (emails, WebSocket, etc).
+│
+├── shared/                            # Common/shared services like Redis
+│   └── redis-stack.yml                # Docker Compose setup for Redis cache service.
+ 
+
+
+```
+
+
+---
 ## Business Logic by Service
 
 ### 1. **Laravel User Service**
