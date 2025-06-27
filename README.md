@@ -14,6 +14,7 @@ Table of contents
 * [Project Structure](#project-structure)
 * [Business Logic by Service](#business-logic-by-service)
 * [Key Features](#key-features)
+* [Testing Individual Services](#testing-individual-services)
 * [Run Project Steps](#run-project-steps)
 * [Tools & Technologies](#tools--technologies)
 * [License](#license)
@@ -34,7 +35,7 @@ Services communicate asynchronously using Redis Pub/Sub. The architecture is ful
 
 ---
 
-## project-structure
+## Project Structure
 
 ```bash
 
@@ -49,6 +50,12 @@ Services communicate asynchronously using Redis Pub/Sub. The architecture is ful
 
 
 ```
+
+--- 
+
+## Prerequisites
+Before you begin, ensure you have the following installed on your system:
+- Docker Desktop (includes Docker Engine and Docker Compose) or Docker Engine and Docker Compose standalone.
 
 
 ---
@@ -101,6 +108,19 @@ Services communicate asynchronously using Redis Pub/Sub. The architecture is ful
   Database containers and service mocks allow robust and isolated test runs.
 
 ---
+
+
+
+# Testing Individual Services
+
+This project employs a test-ready design with dedicated testing frameworks for each technology stack.
+
+- NestJS Services (Product, Notification): Tests are written using Jest. Navigate to the respective service directory (```micro-services/nestjs-product-service``` or ```micro-services/nestjs-notification-service```) and run ```npm run test``` to execute unit tests. End-to-end tests can be run with ```npm run test:e2e```
+
+
+- Laravel Services (User, Order): Tests are written using PHPUnit. Navigate to the respective service directory (```micro-services/laravel-user-service``` or ```micro-services/laravel-order-service```) and run ```./vendor/bin/phpunit``` or ```docker compose exec <service-name> php artisan test``` to execute tests.
+
+
 
 
 ## Run Project Steps
