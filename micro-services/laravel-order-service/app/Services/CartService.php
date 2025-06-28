@@ -42,7 +42,7 @@ class CartService implements ICart
         $totalQty = $currentQtyInCart + $requestedQty;
 
         // Check against product available quantity
-        if ($totalQty > $product->available_quantity) {
+        if ($totalQty > $product->qty) {
             return ResponseHelper::returnError(400, 'Quantity exceeds available stock.');
         }
 

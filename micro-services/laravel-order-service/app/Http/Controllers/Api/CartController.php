@@ -15,7 +15,7 @@ class CartController extends Controller
     }
 
 
-    public function getCartItems()
+    public function getCartItems(): ?object
     {
         return $this->cartService->getCartItems();
 
