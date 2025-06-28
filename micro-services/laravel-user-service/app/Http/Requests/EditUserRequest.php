@@ -27,7 +27,7 @@ class EditUserRequest extends FormRequest
     {
         return [
             'name'  => 'required|string|max:255',
-            'password' => 'required|string|min:6|confirmed',
+            'password' => 'nullable|string|min:6|confirmed',
         ];
     }
 

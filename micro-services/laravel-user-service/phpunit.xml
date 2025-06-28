@@ -18,15 +18,19 @@
         </include>
     </source>
     <php>
-        <env name="APP_ENV" value="testing"/>
+        <env name="DB_CONNECTION" value="sqlite"/>
+        <env name="DB_DATABASE" value=":memory:"/>
+
+        <!-- Disable Redis and avoid connection error -->
         <env name="CACHE_DRIVER" value="array"/>
         <env name="SESSION_DRIVER" value="array"/>
         <env name="QUEUE_CONNECTION" value="sync"/>
-        <env name="DB_CONNECTION" value="mysql"/>
-        <env name="DB_HOST" value="mysql_db"/>
-        <env name="DB_PORT" value="3306"/>
-        <env name="DB_DATABASE" value="registration_db"/>
-        <env name="DB_USERNAME" value="my_user"/>
-        <env name="DB_PASSWORD" value="1234"/>
+
+        <!-- Force Redis config to safe defaults -->
+        <env name="REDIS_CLIENT" value="phpredis"/>
+        <env name="REDIS_HOST" value="127.0.0.1"/>
+        <env name="REDIS_PASSWORD" value="null"/>
+        <env name="REDIS_PORT" value="6379"/>
     </php>
+
 </phpunit>
