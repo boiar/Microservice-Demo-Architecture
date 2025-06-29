@@ -113,7 +113,7 @@ Before you begin, ensure you have the following installed on your system:
 
 # Testing Individual Services
 
-This project employs a test-ready design with dedicated testing frameworks for each technology stack.
+This project promotes **isolated, robust, and layered testing** across services, distinguishing between **unit** and **feature (integration)** testing.
 
 - NestJS Services (Product, Notification): Tests are written using Jest. Navigate to the respective service directory (```micro-services/nestjs-product-service``` or ```micro-services/nestjs-notification-service```) and run ```npm run test``` to execute unit tests. End-to-end tests can be run with ```npm run test:e2e```
 
