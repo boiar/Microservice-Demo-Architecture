@@ -1,6 +1,6 @@
 # Microservice Demo Architecture
 
-![Microservice Architecture](project.png)
+![Microservice Architecture](./project.png)
 
 A containerized, event-driven microservices architecture that decouples user, product, order, and notification domains. Built with Laravel and NestJS,
 designed for scalability, modularity, and ease of testing.
