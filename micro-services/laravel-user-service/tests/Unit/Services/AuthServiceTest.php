@@ -1,21 +1,24 @@
 <?php
 
-namespace Tests\Unit;
+namespace Tests\Unit\Services;
+use App\Contracts\Repositories\IUserRepository;
 use App\DTOs\LoginUserDTO;
+use App\DTOs\RegisterUserDTO;
+use App\Services\AuthService;
+use Illuminate\Foundation\Testing\RefreshDatabase;
+use Tests\Unit\Stubs\UserRepositoryStub;
 use Tests\TestCase;
 
-use App\DTOs\RegisterUserDTO;
-use Illuminate\Support\Str;
-use Tests\Stubs\Services\AuthStubService;
-
-class AuthTest extends TestCase
+class AuthServiceTest extends TestCase
 {
 
+    use RefreshDatabase;
 
     protected function setUp(): void
     {
         parent::setUp();
-        $this->app->bind(\App\Services\AuthService::class, AuthStubService::class);
+        $this->app->singleton(IUserRepository::class, UserRepositoryStub::class);
+        $this->authService = app(AuthService::class);
     }
 
 
@@ -26,9 +29,8 @@ class AuthTest extends TestCase
         $dto->setEmail('test@example.com');
         $dto->setPassword('password123');
 
-        $authService = app(\App\Services\AuthService::class);
 
-        $response = $authService->register($dto);
+        $response = $this->authService->register($dto);
 
         $data = $response->getData(true);
 
@@ -49,7 +51,7 @@ class AuthTest extends TestCase
         $dto2->setEmail('duplicate@example.com');
         $dto2->setPassword('differentPassword');
 
-        $authService = app(\App\Services\AuthService::class);
+        $authService = app(AuthService::class);
 
         // First registration
         $firstResponse = $authService->register($dto1);
@@ -68,19 +70,21 @@ class AuthTest extends TestCase
 
     public function test_login_successful()
     {
+        $authService = app(AuthService::class);
         $registerDto = new RegisterUserDTO();
         $registerDto->setName('Test User');
         $registerDto->setEmail('login@example.com');
         $registerDto->setPassword('password123');
 
-        app(\App\Services\AuthService::class)->register($registerDto);
+
+        $authService->register($registerDto);
 
 
         $loginDto = new LoginUserDTO();
         $loginDto->setEmail('login@example.com');
         $loginDto->setPassword('password123');
 
-        $response = app(\App\Services\AuthService::class)->login($loginDto);
+        $response = $authService->login($loginDto);
 
         $data = $response->getData(true);
 
@@ -96,19 +100,21 @@ class AuthTest extends TestCase
         $registerDto->setName('Test User');
         $registerDto->setEmail('register@example.com');
         $registerDto->setPassword('password123');
+        $authService = app(AuthService::class);
 
-        app(\App\Services\AuthService::class)->register($registerDto);
+
+        $authService->register($registerDto);
 
 
         $loginDto = new LoginUserDTO();
         $loginDto->setEmail('invalid_email@example.com');
         $loginDto->setPassword('password123');
 
-        $response = app(\App\Services\AuthService::class)->login($loginDto);
+        $response = $authService->login($loginDto);
 
         $data = $response->getData(true);
 
-        $this->assertEquals('Invalid Credentials', $data['msg']);
+        $this->assertEquals('Invalid email or password', $data['msg']);
         $this->assertEquals(401, $data['code']);
     }
 
@@ -120,18 +126,21 @@ class AuthTest extends TestCase
         $registerDto->setEmail('login@example.com');
         $registerDto->setPassword('password123');
 
-        app(\App\Services\AuthService::class)->register($registerDto);
+        $authService = app(AuthService::class);
+
+
+        $authService->register($registerDto);
 
 
         $loginDto = new LoginUserDTO();
         $loginDto->setEmail('invalid_email@example.com');
         $loginDto->setPassword('password');
 
-        $response = app(\App\Services\AuthService::class)->login($loginDto);
+        $response = $authService->login($loginDto);
 
         $data = $response->getData(true);
 
-        $this->assertEquals('Invalid Credentials', $data['msg']);
+        $this->assertEquals('Invalid email or password', $data['msg']);
         $this->assertEquals(401, $data['code']);
     }
 }

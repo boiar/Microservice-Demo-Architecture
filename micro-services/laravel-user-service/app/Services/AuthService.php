@@ -4,12 +4,12 @@
 
 namespace App\Services;
 
-use App\Contracts\IAuth;
+use App\Contracts\Repositories\IUserRepository;
+use App\Contracts\Services\IAuth;
 use App\DTOs\LoginUserDTO;
 use App\DTOs\RegisterUserDTO;
 use App\Helpers\JwtHelper;
 use App\Helpers\ResponseHelper;
-use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cache;
@@ -19,13 +19,29 @@ use Illuminate\Support\Facades\Redis;
 
 class AuthService implements IAuth
 {
+    protected IUserRepository $userRepo;
+
+    public function __construct(IUserRepository $userRepo)
+    {
+        $this->userRepo = $userRepo;
+    }
+
+
     public function register(RegisterUserDTO $dto): object
     {
-        $user = User::create([
+        if ($this->userRepo->getBy('email', '=', $dto->getEmail())->isNotEmpty()) {
+            return response()->json([
+                'msg' => 'Email already exists',
+                'code' => 409
+            ], 409);
+        }
+
+        $user = $this->userRepo->create([
              'name'     => $dto->getName(),
              'email'    => $dto->getEmail(),
-             'password' => Hash::make($dto->getPassword()),
+             'password' => $dto->getPassword(),
         ]);
+
 
         $token = JwtHelper::generateToken($user);
 
@@ -62,16 +78,13 @@ class AuthService implements IAuth
 
     public function login(LoginUserDTO $dto): object
     {
-        $credentials = [
-            'email'    => $dto->getEmail(),
-            'password' => $dto->getPassword(),
-        ];
+        $user = $this->userRepo->getBy('email', '=', $dto->getEmail())->first();
 
-        if (!Auth::attempt($credentials)) {
+
+        if (!$user || !Hash::check($dto->getPassword(), $user->password)) {
             return ResponseHelper::returnError(401, 'Invalid email or password');
         }
 
-        $user = Auth::user();
 
         $token = JwtHelper::generateToken($user);
         $refreshToken = JwtHelper::generateRefreshToken($user->id);
@@ -100,7 +113,7 @@ class AuthService implements IAuth
             return ResponseHelper::returnError(401, 'Invalid or expired refresh token');
         }
 
-        $user = User::find($userId);
+        $user = $this->userRepo->findById($userId);
 
         if (!$user) {
             return ResponseHelper::returnError(404, 'User not found');

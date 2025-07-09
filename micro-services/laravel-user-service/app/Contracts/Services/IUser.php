@@ -1,13 +1,10 @@
 <?php
 
-namespace app\Contracts;
+namespace App\Contracts\Services;
 
 
 
-use App\DTOs\LoginUserDTO;
-use App\DTOs\RegisterUserDTO;
 use App\DTOs\UpdateUserProfileDTO;
-use Illuminate\Http\Request;
 
 interface IUser
 {
