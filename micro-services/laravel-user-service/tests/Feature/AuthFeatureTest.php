@@ -2,8 +2,10 @@
 
 namespace Tests\Feature;
 
+use App\Contracts\Repositories\IUserRepository;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
+use Tests\Unit\Stubs\UserRepositoryStub;
 
 class AuthFeatureTest extends TestCase
 {
@@ -13,7 +15,7 @@ class AuthFeatureTest extends TestCase
     {
         $response = $this->postJson('/api/register', [
             'name' => 'Test User',
-            'email' => 'test@example.com',
+            'email' => 'test_' . uniqid() . '@example.com',
             'password' => 'password123',
             'password_confirmation' => 'password123',
         ]);

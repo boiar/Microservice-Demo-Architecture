@@ -2,10 +2,12 @@
 
 namespace tests\Feature;
 
+use App\Contracts\Repositories\IUserRepository;
 use App\Helpers\JwtHelper;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Hash;
 use Tests\TestCase;
+use Tests\Unit\Stubs\UserRepositoryStub;
 
 class UserFeatureTest extends TestCase
 {
