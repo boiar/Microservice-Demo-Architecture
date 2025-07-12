@@ -1,10 +1,9 @@
 <?php
 
-namespace App\Contracts;
-use App\DTOs\AddItemToCartDTO;
+namespace App\Contracts\Services;
 use App\DTOs\CreateOrderDTO;
 
-interface IOrder
+interface IOrderService
 {
     public function getUserOrders(): object;
 

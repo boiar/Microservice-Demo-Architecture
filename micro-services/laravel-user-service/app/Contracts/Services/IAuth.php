@@ -10,6 +10,10 @@ use Illuminate\Http\Request;
 
 interface IAuth
 {
+    /**
+     * @param RegisterUserDTO $dto
+     * @return array<string, mixed>
+     */
     public function register(RegisterUserDTO $dto): object;
 
     public function login(LoginUserDTO $dto): object;

@@ -1,9 +1,9 @@
 <?php
 
-namespace App\Contracts;
+namespace App\Contracts\Services;
 use App\DTOs\AddItemToCartDTO;
 
-interface ICart
+interface ICartService
 {
     public function getCartItems(): object;
 

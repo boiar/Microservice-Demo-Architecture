@@ -2,86 +2,85 @@
 
 namespace App\Services;
 
+use App\Contracts\Repositories\ICartRepository;
+use App\Contracts\Repositories\IProductRepository;
+use App\Contracts\Services\ICartService;
+use App\Contracts\Services\IJwtService;
 use App\DTOs\AddItemToCartDTO;
-use App\Helpers\JwtHelper;
 use App\Helpers\ResponseHelper;
-use App\Models\Cart;
-use App\Models\Product;
-use App\Contracts\ICart;
 
-
-class CartService implements ICart
+class CartService implements ICartService
 {
+    protected ICartRepository $cartRepo;
+    protected IProductRepository $productRepo;
+    protected IJwtService $jwtService;
+
+
+    public function __construct(
+        ICartRepository $cartRepo,
+        IProductRepository $productRepo,
+        IJwtService $jwtService
+    )
+    {
+        $this->cartRepo = $cartRepo;
+        $this->productRepo = $productRepo;
+        $this->jwtService = $jwtService;
+    }
 
     public function getCartItems(): object
     {
-        $cartItems = collect(Cart::getCartItems())->toArray();
+        $userId    = $this->jwtService->getUserIdFromToken();
+
+        $cartItems = $this->cartRepo->getUserCartItems($userId);
+
         return ResponseHelper::returnData($cartItems);
     }
 
-
-    public function addToCart(AddItemToCartDTO $dto): ?object
+    public function addToCart(AddItemToCartDTO $dto): object
     {
-        $product = Product::where('id', $dto->getProductId())->first();
-        if(!is_object($product)){
-            return ResponseHelper::returnError(404, 'Invalid Product');
+        $userId = $this->jwtService->getUserIdFromToken();
+
+
+        $product = $this->productRepo->findById($dto->getProductId());
+        if (!$product) {
+            return ResponseHelper::returnError(404, 'Invalid product');
         }
 
-
-        $userId = JwtHelper::getUserIdFromToken();
-
-        // Check product exists in cart
-        $existingItem = Cart::where('user_id', $userId)
-                            ->where('product_id', $dto->getProductId())
-                            ->first();
-
+        $existingItem = $this->cartRepo->findUserCartItem($userId, $dto->getProductId());
 
         $requestedQty = $dto->getQuantity();
-        // Calculate total quantity
-        $currentQtyInCart = $existingItem ? $existingItem->quantity : 0;
-        $totalQty = $currentQtyInCart + $requestedQty;
+        $existingQty  = $existingItem ? $existingItem->quantity : 0;
+        $totalQty     = $requestedQty + $existingQty;
 
-        // Check against product available quantity
         if ($totalQty > $product->qty) {
             return ResponseHelper::returnError(400, 'Quantity exceeds available stock.');
         }
 
-
-
         if ($existingItem) {
-            // Update qty
-            $existingItem->quantity += $dto->getQuantity();
-            $existingItem->save();
-
-            return $existingItem;
+            $this->cartRepo->updateQuantity($existingItem, $totalQty);
+            return ResponseHelper::returnSuccessMessage('Item added to cart', 201);
         }
 
-        // Insert into cart
-        $cartItem = Cart::create([
-             'user_id' => $userId,
-             'product_id' => $dto->getProductId(),
-             'quantity' => $dto->getQuantity(),
+        $this->cartRepo->create([
+            'user_id'    => $userId,
+            'product_id' => $dto->getProductId(),
+            'quantity'   => $requestedQty,
         ]);
 
-        return $cartItem;
+        return ResponseHelper::returnSuccessMessage('Item added to cart', 201);
     }
 
-
-    public function removeFromCart(int $itemId): ?object
+    public function removeFromCart(int $itemId): object
     {
+        $userId = $this->jwtService->getUserIdFromToken();
+        $deleted = $this->cartRepo->deleteItem($userId, $itemId);
 
-        $userId = JwtHelper::getUserIdFromToken();
-
-        $cartItem = Cart::where('user_id', $userId)
-                        ->where('id', $itemId)
-                        ->first();
-
-        if (!$cartItem) {
+        if (!$deleted) {
             return ResponseHelper::returnError(404, 'Item not found in cart');
         }
 
-        $cartItem->delete();
-
         return ResponseHelper::returnSuccessMessage('Item removed from cart successfully', 200);
     }
+
+
 }

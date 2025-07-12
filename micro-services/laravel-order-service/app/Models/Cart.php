@@ -15,19 +15,4 @@ class Cart extends Model
     ];
 
 
-    public static function getCartItems()
-    {
-        $userId = JwtHelper::getUserIdFromToken();
-
-        return self::select(
-            'carts.id as cart_id',
-            'carts.quantity',
-            'products.id as product_id',
-            'products.name as product_name',
-            'products.price',
-        )->join('products', 'carts.product_id', '=', 'products.id')
-         ->where('carts.user_id', $userId)
-         ->get();
-
-    }
 }
