@@ -8,7 +8,7 @@ use App\DTOs\LoginUserDTO;
 use App\DTOs\RegisterUserDTO;
 use Illuminate\Http\Request;
 
-interface IAuth
+interface IAuthService
 {
     /**
      * @param RegisterUserDTO $dto

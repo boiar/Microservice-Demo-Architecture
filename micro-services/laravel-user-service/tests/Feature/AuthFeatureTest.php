@@ -2,10 +2,8 @@
 
 namespace Tests\Feature;
 
-use App\Contracts\Repositories\IUserRepository;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
-use Tests\Unit\Stubs\UserRepositoryStub;
 
 class AuthFeatureTest extends TestCase
 {

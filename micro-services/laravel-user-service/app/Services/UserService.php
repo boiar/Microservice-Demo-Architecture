@@ -3,22 +3,25 @@
 namespace App\Services;
 
 use App\Contracts\Repositories\IUserRepository;
-use App\Contracts\Services\IUser;
+use App\Contracts\Services\IJwtService;
+use App\Contracts\Services\IUserService;
 use App\DTOs\UpdateUserProfileDTO;
-use App\Helpers\JwtHelper;
 use App\Helpers\ResponseHelper;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Redis;
 
-class UserService implements IUser
+class UserService implements IUserService
 {
     protected IUserRepository $userRepo;
+    protected IJwtService $jwtService;
 
-    public function __construct(IUserRepository $userRepo)
+
+    public function __construct(IUserRepository $userRepo, IJwtService $jwtService )
     {
         $this->userRepo = $userRepo;
+        $this->jwtService = $jwtService;
     }
 
     public function updateProfile(UpdateUserProfileDTO $dto): object
@@ -35,7 +38,7 @@ class UserService implements IUser
 
         $updatedUser = $this->userRepo->update($user->id, $updateData);
 
-        $newToken = JwtHelper::generateToken($updatedUser);
+        $newToken = $this->jwtService->generateToken($updatedUser);
 
         Log::info('[UserService] About to publish user.updated event');
 

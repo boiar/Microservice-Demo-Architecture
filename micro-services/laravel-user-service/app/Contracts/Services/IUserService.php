@@ -6,7 +6,7 @@ namespace App\Contracts\Services;
 
 use App\DTOs\UpdateUserProfileDTO;
 
-interface IUser
+interface IUserService
 {
     public function updateProfile(UpdateUserProfileDTO $dto): object;
 
