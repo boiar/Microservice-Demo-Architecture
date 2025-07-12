@@ -3,79 +3,97 @@
 
 namespace App\Services;
 
-use App\Contracts\IOrder;
+use App\Contracts\Repositories\ICartRepository;
+use App\Contracts\Repositories\IOrderItemRepository;
+use App\Contracts\Repositories\IOrderRepository;
+use App\Contracts\Repositories\IProductRepository;
+use App\Contracts\Services\IJwtService;
+use App\Contracts\Services\IOrderService;
 use App\DTOs\CreateOrderDTO;
 use App\Helpers\JwtHelper;
 use App\Helpers\ResponseHelper;
-use App\Models\Order;
-use App\Models\OrderItem;
-use App\Models\Cart;
-use App\Models\Product;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Redis;
 
-class OrderService implements IOrder
+class OrderService implements IOrderService
 {
+    protected IOrderRepository $orderRepo;
+    protected IOrderItemRepository $orderItemRepo;
+    protected ICartRepository $cartRepo;
+    protected IProductRepository $productRepo;
+    protected IJwtService $jwtService;
+
+
+    public function __construct(
+        IOrderRepository $orderRepo,
+        IOrderItemRepository $orderItemRepo,
+        ICartRepository $cartRepo,
+        IProductRepository $productRepo,
+        IJwtService $jwtService
+
+    ) {
+        $this->orderRepo      = $orderRepo;
+        $this->orderItemRepo  = $orderItemRepo;
+        $this->cartRepo       = $cartRepo;
+        $this->productRepo    = $productRepo;
+        $this->jwtService    = $jwtService;
+
+    }
+
+
 
     public function getUserOrders(): object
     {
-        $orders = collect(Order::getUserOrders())->toArray();
+        $userId = $this->jwtService->getUserIdFromToken();
+        $orders = $this->orderRepo->getUserOrders($userId);
         return ResponseHelper::returnData($orders);
     }
 
 
     public function getOrderDetails(int $orderId): object
     {
-        $userId = JwtHelper::getUserIdFromToken();
+        $userId = $this->jwtService->getUserIdFromToken();
 
-        $orderExists = DB::table('orders')
-                         ->where('id', $orderId)
-                         ->where('user_id', $userId)
-                         ->exists();
-
-        if (!$orderExists) {
+        if (!$this->orderRepo->userOwnsOrder($userId, $orderId)) {
             return ResponseHelper::returnError(403, 'This action is unauthorized.');
         }
 
-        $orderInfo  = Order::orderById($orderId);
-        $orderItems = OrderItem::orderItemsByOrderId($orderId);
+        $orderInfo  = $this->orderRepo->getOrderById($orderId);
+        $orderItems = $this->orderItemRepo->getOrderItemsByOrderId($orderId);
 
         return ResponseHelper::returnData([
-          'order' => $orderInfo,
-          'items' => $orderItems
+            'order' => $orderInfo,
+            'items' => $orderItems
         ]);
 
     }
 
     public function createOrder(CreateOrderDTO $dto): ?object
     {
-        $user = JwtHelper::getUserFromToken();
+        $user = $this->jwtService->getUserFromToken();
+        $userId = $user['id'];
 
-
-        $cartItems = Cart::where('user_id', $user['id'])->get();
+        $cartItems = $this->cartRepo->getUserCartItems($userId);
 
         if ($cartItems->isEmpty()) {
-             return ResponseHelper::returnError(400, "Cart is empty");
+            return ResponseHelper::returnError(400, "Cart is empty");
         }
 
-        return DB::transaction(function () use ($dto, $user, $cartItems) {
-
-            $order = Order::create([
-               'user_id' => $user['id'],
-               'address' => $dto->getAddress(),
-               'note'    => $dto->getNotes(),
-               'status'  => Order::STATUS_PENDING,
-               'total_price' => 0,
+        return DB::transaction(function () use ($dto, $user, $cartItems, $userId) {
+            $order = $this->orderRepo->create([
+                  'user_id'     => $userId,
+                  'address'     => $dto->getAddress(),
+                  'note'        => $dto->getNotes(),
+                  'status'      => 'pending',
+                  'total_price' => 0,
             ]);
 
             $productIds = $cartItems->pluck('product_id')->toArray();
-            $products   = Product::whereIn('id', $productIds)->lockForUpdate()->get()->keyBy('id');
+            $products   = $this->productRepo->findByIdsWithLock($productIds);
             $totalPrice = 0;
             $data       = [];
 
-
             foreach ($cartItems as $item) {
-
                 $product = $products->get($item->product_id);
 
                 if (!$product) {
@@ -86,9 +104,8 @@ class OrderService implements IOrder
                     throw new \Exception("Insufficient quantity for product: {$product->name}");
                 }
 
-                // Decrease product quantity
                 $product->qty -= $item->quantity;
-                $product->save();
+                $this->productRepo->update($product->id, ['qty' => $product->qty]);
 
                 $lineTotal = $product->price * $item->quantity;
                 $totalPrice += $lineTotal;
@@ -103,25 +120,25 @@ class OrderService implements IOrder
                 ];
             }
 
-            OrderItem::insert($data);
-            $order->update(['total_price' => $totalPrice]);
+            $this->orderItemRepo->insert($data);
+            $this->orderRepo->update($order->id, ['total_price' => $totalPrice]);
 
             Redis::publish('order-events', json_encode([
-                'event' => 'order.created',
-                'user_id' => $user['id'] ?? null,
-                'user_email' => $user['email'] ?? null,
-                'order_id' => $order->id,
-                'products' => collect($data)->map(fn($item) => [
-                    'product_id' => $item['product_id'],
-                    'qty' => $item['quantity'],
-                ])->toArray(),
+               'event'      => 'order.created',
+               'user_id'    => $userId,
+               'user_email' => $user['email'] ?? null,
+               'order_id'   => $order->id,
+               'products'   => collect($data)->map(fn($item) => [
+                   'product_id' => $item['product_id'],
+                   'qty'        => $item['quantity'],
+               ])->toArray(),
             ]));
 
-            Cart::where('user_id', $user['id'])->delete();
+            $this->cartRepo->clearUserCart($userId);
 
             return ResponseHelper::returnData([
-              'order' => $order->fresh(),
-              'items' => $data
+                'order' => $order,
+                'items' => $data
             ]);
         });
     }

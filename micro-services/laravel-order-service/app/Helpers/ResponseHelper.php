@@ -4,6 +4,7 @@ namespace app\Helpers;
 
 use Illuminate\Contracts\Validation\Validator;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Support\Collection;
 
 class ResponseHelper
 {
@@ -28,13 +29,16 @@ class ResponseHelper
     }
 
 
-    public static function returnData(array $dataArr, int $code = 200, string $msg = ""): JsonResponse
+    public static function returnData(array|Collection $data, int $code = 200, string $msg = ""): JsonResponse
     {
+        if ($data instanceof Collection) {
+            $data = $data->toArray();
+        }
         return response()->json([
             'status' => true,
             'code'   => $code,
             'msg'    => $msg,
-            'data'   => $dataArr
+            'data'   => $data
         ])->setStatusCode($code);
     }
 
