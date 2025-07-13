@@ -12,5 +12,7 @@ import {AuthModule} from "../auth/auth.module";
   ],
   controllers: [ProductsController],
   providers: [ProductsService],
+  exports: ['ProductRepository'],
+
 })
 export class ProductsModule {}

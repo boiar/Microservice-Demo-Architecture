@@ -6,6 +6,7 @@ import type { Cache } from 'cache-manager';
 import { Product } from './product.entity';
 import Redis from 'ioredis';
 import {IProductInterface} from "./iproduct.interface";
+import {IProductRepositoryInterface} from "./interfaces/product-repository.interface";
 
 
 @Injectable()
@@ -17,8 +18,8 @@ export class ProductsService implements OnModuleInit, OnModuleDestroy, IProductI
 
 
     constructor(
-        @InjectRepository(Product)
-        private productRepository: Repository<Product>,
+        @Inject('ProductRepository')
+        private readonly productRepository: IProductRepositoryInterface,
         @Inject(CACHE_MANAGER) private cacheManager: Cache,
     ) {
         this.redisSubscriber = new Redis({
@@ -83,7 +84,7 @@ export class ProductsService implements OnModuleInit, OnModuleDestroy, IProductI
         const cached = await this.cacheManager.get<Product[]>(cacheKey);
         if (cached) return cached;
 
-        const products = await this.productRepository.find();
+        const products = await this.productRepository.findAll();
         await this.cacheManager.set(cacheKey, products, 3600); // Cache for 1 hour
         return products;
     }
@@ -99,7 +100,7 @@ export class ProductsService implements OnModuleInit, OnModuleDestroy, IProductI
                              userEmail?: string): Promise<void> {
         for (const item of products) {
             this.logger.log(`Decreasing product #${item.product_id} by ${item.qty}`);
-            await this.productRepository.decrement({ id: item.product_id }, 'qty', item.qty);
+            await this.productRepository.decrementQty({ id: item.product_id }, item.qty);
 
             // Publish product.updated event
             await this.redisPublisher.publish('product-events', JSON.stringify({
