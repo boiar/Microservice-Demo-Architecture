@@ -2,27 +2,24 @@
 
 namespace Tests\Unit\Services;
 
-use App\Contracts\Repositories\IUserRepository;
+use App\Contracts\Services\IJwtService;
 use App\DTOs\RegisterUserDTO;
 use App\DTOs\UpdateUserProfileDTO;
 use App\Models\User;
-use App\Services\UserService;
-use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Hash;
 use Tests\TestCase;
-use Tests\Unit\Stubs\UserRepositoryStub;
-use App\Helpers\JwtHelper;
 
 class UserServiceTest extends TestCase
 {
+    protected IJwtService $jwtService;
+
     protected function setUp(): void
     {
         parent::setUp();
-
         $this->app->singleton(\App\Contracts\Repositories\IUserRepository::class, \Tests\Unit\Stubs\UserRepositoryStub::class);
 
         $this->authService = app(\App\Services\AuthService::class);
         $this->userService = app(\App\Services\UserService::class);
+        $this->jwtService = $this->app->make(IJwtService::class);
     }
 
 
@@ -39,7 +36,7 @@ class UserServiceTest extends TestCase
 
         $refreshToken = $registerData['data']['refresh_token'];
 
-        $decodedPayload = JwtHelper::decodeToken($refreshToken);
+        $decodedPayload = $this->jwtService->decodeToken($refreshToken);
         $userId = $decodedPayload['sub']; // 'sub' is user ID
 
         $userData = $registerData['data']['user'];

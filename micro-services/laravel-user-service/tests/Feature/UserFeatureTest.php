@@ -2,16 +2,24 @@
 
 namespace tests\Feature;
 
-use App\Contracts\Repositories\IUserRepository;
-use App\Helpers\JwtHelper;
+use App\Contracts\Services\IJwtService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Hash;
 use Tests\TestCase;
-use Tests\Unit\Stubs\UserRepositoryStub;
 
 class UserFeatureTest extends TestCase
 {
     use RefreshDatabase;
+
+    protected IJwtService $jwtService;
+
+    protected function setUp(): void
+    {
+        parent::setUp();
+
+        // resolve jwt service from container
+        $this->jwtService = $this->app->make(IJwtService::class);
+    }
 
 
     public function test_authenticated_user_can_update_profile()
@@ -23,7 +31,7 @@ class UserFeatureTest extends TestCase
             'password' => bcrypt('oldpassword'),
         ]);
 
-        $token = JwtHelper::generateToken($user);
+        $token = $this->jwtService->generateToken($user);
 
         $response = $this->withHeaders([
            'Authorization' => "Bearer $token",
@@ -59,7 +67,7 @@ class UserFeatureTest extends TestCase
 
         $user = \App\Models\User::factory()->create();
 
-        $token = JwtHelper::generateToken($user);
+        $token = $this->jwtService->generateToken($user);
 
         $response = $this->withHeaders([
            'Authorization' => "Bearer $token",

@@ -5,25 +5,27 @@
 namespace App\Services;
 
 use App\Contracts\Repositories\IUserRepository;
-use App\Contracts\Services\IAuth;
+use App\Contracts\Services\IAuthService;
+use App\Contracts\Services\IJwtService;
 use App\DTOs\LoginUserDTO;
 use App\DTOs\RegisterUserDTO;
-use App\Helpers\JwtHelper;
 use App\Helpers\ResponseHelper;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Redis;
 
 
-class AuthService implements IAuth
+class AuthService implements IAuthService
 {
     protected IUserRepository $userRepo;
+    protected IJwtService $jwtService;
 
-    public function __construct(IUserRepository $userRepo)
+
+    public function __construct(IUserRepository $userRepo, IJwtService $jwtService)
     {
         $this->userRepo = $userRepo;
+        $this->jwtService = $jwtService;
     }
 
 
@@ -43,9 +45,9 @@ class AuthService implements IAuth
         ]);
 
 
-        $token = JwtHelper::generateToken($user);
+        $token = $this->jwtService->generateToken($user);
 
-        $refreshToken = JwtHelper::generateRefreshToken($user->id);
+        $refreshToken = $this->jwtService->generateRefreshToken($user->id);
         Cache::put("refresh_{$refreshToken}", $user->id, now()->addDays(7));
 
 
@@ -86,8 +88,8 @@ class AuthService implements IAuth
         }
 
 
-        $token = JwtHelper::generateToken($user);
-        $refreshToken = JwtHelper::generateRefreshToken($user->id);
+        $token = $this->jwtService->generateToken($user);
+        $refreshToken = $this->jwtService->generateRefreshToken($user->id);
 
         Cache::put("refresh_{$refreshToken}", $user->id, now()->addDays(7));
 
@@ -120,7 +122,7 @@ class AuthService implements IAuth
         }
 
         // Generate new access token
-        $token = JwtHelper::generateToken($user);
+        $token = $this->jwtService->generateToken($user);
 
         return ResponseHelper::returnData([
               'token' => $token,
