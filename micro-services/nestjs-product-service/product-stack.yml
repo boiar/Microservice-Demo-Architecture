@@ -1,0 +1,94 @@
+version: '3.9'
+
+services:
+
+  product-service:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: product-service
+    restart: unless-stopped
+    env_file:
+      - .env
+    environment:
+      PORT: ${PORT:-3000}
+      NODE_ENV: ${APP_ENV:-development}
+      DEBUG: ${APP_DEBUG:-false}
+
+      # Redis
+      REDIS_HOST: redis_cache
+      REDIS_PORT: 6379
+      REDIS_PASSWORD: redis
+
+      # MySQL
+      MYSQL_HOST: mysql_product
+      MYSQL_PORT: 3306
+      MYSQL_USER: root
+      MYSQL_PASSWORD: root
+      MYSQL_DATABASE: product_db
+
+      # RabbitMQ
+      RABBITMQ_URL: amqp://${RABBITMQ_USER:-admin}:${RABBITMQ_PASS:-admin}@rabbitmq:5672
+
+    ports:
+      - "${PORT:-3000}:3000"
+
+    depends_on:
+      mysql_product:
+        condition: service_healthy
+      redis_cache:
+        condition: service_healthy
+
+    networks:
+      - app-network
+
+
+  mysql_product:
+    image: mysql:8.0
+    container_name: mysql_product
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: product_db
+    ports:
+      - "3307:3306"
+    volumes:
+      - mysql-product-data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-proot"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - app-network
+
+
+  redis_cache:
+    image: redis:7-alpine
+    container_name: redis_cache
+    restart: unless-stopped
+    command: redis-server --requirepass redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-product-data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "-a", "redis", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - app-network
+
+
+networks:
+  app-network:
+    external: true
+
+
+volumes:
+  mysql-product-data:
+    name: mysql-product-data
+
+  redis-product-data:
+    name: redis-product-data

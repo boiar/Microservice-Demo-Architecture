@@ -17,7 +17,7 @@ RUN apk add --no-cache \
     freetype-dev \
     && pecl install redis \
     && docker-php-ext-enable redis \
-    && docker-php-ext-install pdo pdo_mysql opcache
+    && docker-php-ext-install pdo pdo_mysql sockets opcache
 
 # Install Composer globally
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
@@ -41,9 +41,5 @@ RUN chown -R www-data:www-data /var/www/storage \
     && chmod -R 775 /var/www/bootstrap/cache
 
 EXPOSE 8000
-
-# Optional: wait for MySQL
-# COPY wait-for-it.sh /usr/local/bin/wait-for-it
-# RUN chmod +x /usr/local/bin/wait-for-it
 
 CMD ["php", "artisan", "serve", "--host=0.0.0.0", "--port=8000"]

@@ -1,4 +1,4 @@
-FROM node:20-alpine AS builder
+FROM node:22-alpine AS builder
 
 WORKDIR /app
 
@@ -21,6 +21,4 @@ COPY --from=builder /app/node_modules ./node_modules
 EXPOSE 3000
 CMD ["node", "dist/main"]
 
-COPY wait-for-it.sh /usr/bin/wait-for-it
-RUN chmod +x /usr/bin/wait-for-it
-SHELL ["/bin/sh", "-c"]
+

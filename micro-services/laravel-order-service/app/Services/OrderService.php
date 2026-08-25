@@ -9,6 +9,7 @@ use App\Contracts\Repositories\IOrderRepository;
 use App\Contracts\Repositories\IProductRepository;
 use App\Contracts\Services\IJwtService;
 use App\Contracts\Services\IOrderService;
+use App\Contracts\Services\IRabbitMQService;
 use App\DTOs\CreateOrderDTO;
 use App\Helpers\JwtHelper;
 use App\Helpers\ResponseHelper;
@@ -22,6 +23,7 @@ class OrderService implements IOrderService
     protected ICartRepository $cartRepo;
     protected IProductRepository $productRepo;
     protected IJwtService $jwtService;
+    protected IRabbitMQService $rabbitMQService;
 
 
     public function __construct(
@@ -29,15 +31,15 @@ class OrderService implements IOrderService
         IOrderItemRepository $orderItemRepo,
         ICartRepository $cartRepo,
         IProductRepository $productRepo,
-        IJwtService $jwtService
-
+        IJwtService $jwtService,
+        IRabbitMQService $rabbitMQService
     ) {
         $this->orderRepo      = $orderRepo;
         $this->orderItemRepo  = $orderItemRepo;
         $this->cartRepo       = $cartRepo;
         $this->productRepo    = $productRepo;
         $this->jwtService    = $jwtService;
-
+        $this->rabbitMQService = $rabbitMQService;
     }
 
 
@@ -123,7 +125,7 @@ class OrderService implements IOrderService
             $this->orderItemRepo->insert($data);
             $this->orderRepo->update($order->id, ['total_price' => $totalPrice]);
 
-            Redis::publish('order-events', json_encode([
+            $this->rabbitMQService->publish('example_exchange', 'example_routing_key', [
                'event'      => 'order.created',
                'user_id'    => $userId,
                'user_email' => $user['email'] ?? null,
@@ -132,7 +134,7 @@ class OrderService implements IOrderService
                    'product_id' => $item['product_id'],
                    'qty'        => $item['quantity'],
                ])->toArray(),
-            ]));
+            ]);
 
             $this->cartRepo->clearUserCart($userId);
 

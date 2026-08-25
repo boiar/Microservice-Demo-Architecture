@@ -1,6 +1,6 @@
 services:
-  # Redis Cache/Queue Broker
-  redis-cache:
+  # Redis Cache
+  micro-service-redis:
     image: redis:latest
     env_file:
       - docker.env

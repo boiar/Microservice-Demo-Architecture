@@ -1,0 +1,47 @@
+services:
+  api-gateway-1:
+    build: .
+    image: springboot-api-gateway:latest
+    container_name: springboot-api-gateway-1
+    restart: unless-stopped
+    env_file:
+      - docker.env
+    environment:
+      - INSTANCE_ID=api-gateway-1
+    # Optional: publish a host port for direct debugging (bypasses Nginx)
+    ports:
+      - "8081:8080"
+    networks:
+      - app-network
+
+  api-gateway-2:
+    build: .
+    image: springboot-api-gateway:latest
+    container_name: springboot-api-gateway-2
+    restart: unless-stopped
+    env_file:
+      - docker.env
+    environment:
+      - INSTANCE_ID=api-gateway-2
+    ports:
+      - "8082:8080"
+    networks:
+      - app-network
+
+  api-gateway-3:
+    build: .
+    image: springboot-api-gateway:latest
+    container_name: springboot-api-gateway-3
+    restart: unless-stopped
+    env_file:
+      - docker.env
+    environment:
+      - INSTANCE_ID=api-gateway-3
+    ports:
+      - "8083:8080"
+    networks:
+      - app-network
+
+networks:
+  app-network:
+    external: true

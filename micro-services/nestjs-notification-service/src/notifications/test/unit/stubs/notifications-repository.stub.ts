@@ -1,5 +1,5 @@
-import { INotificationsRepository } from '../../../interfaces/notifications-repository.interface';
-import { Notification } from '../../../schemas/notification.schema';
+import { INotificationsRepository } from '../../../repository/notifications-repository.interface';
+import { Notification } from '../../../entity/notification.entity';
 
 export class NotificationsRepositoryStub implements INotificationsRepository {
     private notifications: Partial<Notification>[] = [];

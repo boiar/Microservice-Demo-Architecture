@@ -1,4 +1,5 @@
 import {Inject, Injectable, Logger, OnModuleDestroy, OnModuleInit} from '@nestjs/common';
+import { ClientProxy } from '@nestjs/microservices';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { CACHE_MANAGER } from '@nestjs/cache-manager';
@@ -14,21 +15,15 @@ export class ProductsService implements OnModuleInit, OnModuleDestroy, IProductI
 
     private readonly logger = new Logger(ProductsService.name);
     private readonly redisSubscriber: Redis;
-    private readonly redisPublisher: Redis;
 
 
     constructor(
         @Inject('ProductRepository')
         private readonly productRepository: IProductRepositoryInterface,
         @Inject(CACHE_MANAGER) private cacheManager: Cache,
+        @Inject('RMQ_SERVICE') private clientProxy: ClientProxy,
     ) {
         this.redisSubscriber = new Redis({
-            host: process.env.REDIS_HOST || 'localhost',
-            port: parseInt(process.env.REDIS_PORT || '6379', 10),
-            password: process.env.REDIS_PASSWORD || undefined,
-        });
-
-        this.redisPublisher = new Redis({
             host: process.env.REDIS_HOST || 'localhost',
             port: parseInt(process.env.REDIS_PORT || '6379', 10),
             password: process.env.REDIS_PASSWORD || undefined,
@@ -103,15 +98,14 @@ export class ProductsService implements OnModuleInit, OnModuleDestroy, IProductI
             await this.productRepository.decrementQty({ id: item.product_id }, item.qty);
 
             // Publish product.updated event
-            await this.redisPublisher.publish('product-events', JSON.stringify({
-                event: 'product.updated',
+            this.clientProxy.emit('product.updated', {
                 product_id: item.product_id,
                 qty_changed: item.qty,
                 order_id: orderId,
                 user_id: userId,
                 user_email: userEmail,
                 timestamp: new Date().toISOString(),
-            }));
+            });
 
         }
 

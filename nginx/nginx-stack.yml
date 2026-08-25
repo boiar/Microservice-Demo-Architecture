@@ -1,0 +1,18 @@
+services:
+  nginx:
+    image: nginx:alpine
+    container_name: nginx-lb
+    restart: unless-stopped
+    ports:
+      - "8080:80"
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+    networks:
+      - app-network
+    # Note: no depends_on here — the API Gateway lives in a separate
+    # compose file (gateway-stack.yml). Start the gateway stack first,
+    # then this one, per the README's Run Project Steps.
+
+networks:
+  app-network:
+    external: true

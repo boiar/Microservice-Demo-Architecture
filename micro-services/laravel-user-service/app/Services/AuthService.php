@@ -7,6 +7,7 @@ namespace App\Services;
 use App\Contracts\Repositories\IUserRepository;
 use App\Contracts\Services\IAuthService;
 use App\Contracts\Services\IJwtService;
+use App\Contracts\Services\IRabbitMQService;
 use App\DTOs\LoginUserDTO;
 use App\DTOs\RegisterUserDTO;
 use App\Helpers\ResponseHelper;
@@ -20,12 +21,14 @@ class AuthService implements IAuthService
 {
     protected IUserRepository $userRepo;
     protected IJwtService $jwtService;
+    protected IRabbitMQService $rabbitMQService;
 
 
-    public function __construct(IUserRepository $userRepo, IJwtService $jwtService)
+    public function __construct(IUserRepository $userRepo, IJwtService $jwtService, IRabbitMQService $rabbitMQService)
     {
         $this->userRepo = $userRepo;
         $this->jwtService = $jwtService;
+        $this->rabbitMQService = $rabbitMQService;
     }
 
 
@@ -55,18 +58,16 @@ class AuthService implements IAuthService
 
 
         // publish user registered event
-        $result = Redis::publish('user-events', json_encode([
-              'event'     => 'user.registered',
-              'timestamp' => now()->toDateTimeString(),
-              'token'     => $token,
-              'data' => [
-                  'id'    => $user->id,
-                  'name'  => $user->name,
-                  'email' => $user->email,
-              ],
-        ]));
-
-        \Log::info("[AuthService] Redis publish result: $result");
+        $this->rabbitMQService->publish('example_exchange', 'example_routing_key', [
+            'event'     => 'user.registered',
+            'timestamp' => now()->toDateTimeString(),
+            'token'     => $token,
+            'data' => [
+                'id'    => $user->id,
+                'name'  => $user->name,
+                'email' => $user->email,
+            ],
+        ]);
 
         $data = [
             'user'          => $user,

@@ -1,5 +1,5 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { NotificationsService } from '../../notifications.service';
+import { NotificationsService } from '../../service/impl/notifications.service';
 import { ConfigService } from '@nestjs/config';
 import { NotificationsRepositoryStub } from './stubs/notifications-repository.stub';
 

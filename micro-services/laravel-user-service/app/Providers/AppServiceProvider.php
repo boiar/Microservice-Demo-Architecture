@@ -24,6 +24,7 @@ class AppServiceProvider extends ServiceProvider
         $this->app->bind(IUserService::class, UserService::class);
         $this->app->bind(IUserRepository::class, UserRepository::class);
         $this->app->bind(IJwtService::class, JwtService::class);
+        $this->app->bind(IRabbitMQService::class, RabbitMQService::class);
     }
 
     /**

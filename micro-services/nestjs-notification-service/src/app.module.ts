@@ -14,11 +14,10 @@ import { MongooseModule, MongooseModuleOptions } from '@nestjs/mongoose';
             inject: [ConfigService],
             useFactory: async (config: ConfigService): Promise<MongooseModuleOptions> => {
                 const uri = config.get<string>('MONGO_DB_URI');
-                console.log('📌 Mongo URI:', uri); // Add this line
+                console.log('Mongo URI:', uri);
                 return { uri };
             }
         }),
-
 
         NotificationsModule,
     ],
