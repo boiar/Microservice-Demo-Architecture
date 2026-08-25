@@ -7,9 +7,9 @@ services:
       dockerfile: Dockerfile
     container_name: payment-service
     env_file:
-      - .env
+      - docker.env
     ports:
-      - "8081:8081"
+      - "${SERVER_PORT}:8085"
     environment:
       DB_HOST: ${DB_HOST}
       DB_PORT: ${DB_PORT}
@@ -32,7 +32,7 @@ services:
     container_name: payment-postgres
     restart: unless-stopped
     env_file:
-      - .env
+      - docker.env
     environment:
       POSTGRES_USER: ${DB_USERNAME}
       POSTGRES_PASSWORD: ${DB_PASSWORD}

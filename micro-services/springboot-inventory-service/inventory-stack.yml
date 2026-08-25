@@ -9,7 +9,7 @@ services:
     env_file:
       - .env
     ports:
-      - "${SERVER_PORT}:8082"
+      - "${SERVER_PORT}:8084"
     environment:
       DB_HOST: ${DB_HOST}
       DB_PORT: ${DB_PORT}

@@ -39,7 +39,7 @@ public class OutboxEvent {
     @Column(name = "message_key", length = 100)
     private String messageKey;
 
-    @Enumerated(EnumType.STRING)
+
     @Column(name = "event_type", nullable = false)
     private String eventType;
 

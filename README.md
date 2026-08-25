@@ -287,7 +287,7 @@ cd ../..   # Return to project root
 ```bash
 cd micro-services/springboot-payment-service
  
-docker compose -f payment-stack.yml --env-file .env up -d --build
+docker compose -f payment-stack.yml --env-file docker.env up -d --build
  
 cd ../..   # Return to project root
 ```
@@ -298,7 +298,7 @@ cd ../..   # Return to project root
 ```bash
 cd micro-services/springboot-inventory-service
  
-docker compose -f inventory-stack.yml --env-file .env up -d --build
+docker compose -f inventory-stack.yml --env-file docker.env up -d --build
  
 cd ../..   # Return to project root
 ```
