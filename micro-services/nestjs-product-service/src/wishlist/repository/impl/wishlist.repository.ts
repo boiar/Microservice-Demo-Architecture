@@ -1,23 +1,22 @@
-// src/wishlist/wishlist.repository.ts
-
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, FindManyOptions, FindOptionsWhere } from 'typeorm';
-import { Wishlist } from './wishlist.entity';
-import { IWishlistRepositoryInterface } from './interfaces/wishlist-repository.interface';
+import { Repository, FindManyOptions, FindOptionsWhere, DeleteResult } from 'typeorm';
+import { Wishlist } from '../../entity/wishlist.entity';
+import { IWishlistRepositoryInterface } from '../wishlist-repository.interface';
 
 @Injectable()
 export class WishlistRepository implements IWishlistRepositoryInterface {
+
     constructor(
         @InjectRepository(Wishlist)
         private readonly repo: Repository<Wishlist>,
     ) {}
 
-    find(options: FindManyOptions<Wishlist>) {
+    find(options: FindManyOptions<Wishlist>): Promise<Wishlist[]> {
         return this.repo.find(options);
     }
 
-    findOne(where: FindOptionsWhere<Wishlist>) {
+    findOne(where: FindOptionsWhere<Wishlist>): Promise<Wishlist | null> {
         return this.repo.findOne({ where });
     }
 
@@ -29,7 +28,8 @@ export class WishlistRepository implements IWishlistRepositoryInterface {
         return this.repo.save(item);
     }
 
-    delete(where: FindOptionsWhere<Wishlist>) {
+    delete(where: FindOptionsWhere<Wishlist>): Promise<DeleteResult> {
         return this.repo.delete(where);
     }
+
 }

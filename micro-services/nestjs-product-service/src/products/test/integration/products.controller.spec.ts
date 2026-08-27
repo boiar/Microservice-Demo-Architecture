@@ -1,10 +1,10 @@
-import {ProductsController} from "../../products.controller";
-import {ProductsService} from "../../products.service";
-import {IProductInterface} from "../../iproduct.interface";
-import {Test, TestingModule} from "@nestjs/testing";
-import {NotFoundException} from "@nestjs/common";
-import {ProductsRepositoryStub} from "../unit/stubs/products-repository.stub";
-import {CACHE_MANAGER} from "@nestjs/cache-manager";
+import { ProductsController } from "../../products.controller";
+import { ProductsService } from "../../service/impl/products.service";
+import { IProductInterface } from "../../service/product.interface";
+import { Test, TestingModule } from "@nestjs/testing";
+import { NotFoundException } from "@nestjs/common";
+import { ProductsRepositoryStub } from "../unit/stubs/products-repository.stub";
+import { CACHE_MANAGER } from "@nestjs/cache-manager";
 
 describe('ProductsController', () => {
 
@@ -39,7 +39,7 @@ describe('ProductsController', () => {
 
 
         controller = module.get<ProductsController>(ProductsController);
-        service    = module.get<IProductInterface>(ProductsService);
+        service = module.get<IProductInterface>(ProductsService);
         cache = module.get<Cache>(CACHE_MANAGER);
 
     })
@@ -59,15 +59,15 @@ describe('ProductsController', () => {
             expect(findAllSpy).toHaveBeenCalledTimes(1);
         });
     });
-    
+
     describe('findOne', () => {
 
         it('should return one product if found', async () => {
 
             const productId = 1;
-            const product= await controller.findOne(productId);
+            const product = await controller.findOne(productId);
 
-            expect(product).toEqual({ id: 1, name: 'Test Product 1', qty: 10, price: 100,  description: 'Test Desc 1' });
+            expect(product).toEqual({ id: 1, name: 'Test Product 1', availableQty: 10, price: 100, description: 'Test Desc 1' });
         });
 
         it('should throw NotFoundException if product not found', async () => {

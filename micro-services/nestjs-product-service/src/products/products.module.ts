@@ -1,11 +1,14 @@
 import { Module } from '@nestjs/common';
-import { ProductsService } from './products.service';
+import { ProductsService } from './service/impl/products.service';
 import { ProductsController } from './products.controller';
-import {TypeOrmModule} from "@nestjs/typeorm";
-import {Product} from "./product.entity";
-import {AuthModule} from "../auth/auth.module";
+import { TypeOrmModule } from "@nestjs/typeorm";
+import { Product } from "./entity/product.entity";
+import { AuthModule } from "../auth/auth.module";
 
 import { ClientsModule, Transport } from '@nestjs/microservices';
+import { ProductRepository } from './repository/impl/product.repository';
+import { InboxEvent } from './entity/inbox-event.entity';
+import { InboxService } from './service/impl/inbox.service';
 
 @Module({
   imports: [
@@ -22,12 +25,31 @@ import { ClientsModule, Transport } from '@nestjs/microservices';
         },
       },
     ]),
-    TypeOrmModule.forFeature([Product]),
+    TypeOrmModule.forFeature([
+      Product,
+      InboxEvent
+    ]),
     AuthModule,
   ],
   controllers: [ProductsController],
-  providers: [ProductsService],
-  exports: ['ProductRepository'],
+  providers: [
+    {
+      provide: 'ProductRepository',
+      useClass: ProductRepository,
+    },
+    {
+      provide: 'ProductService',
+      useClass: ProductsService,
+    },
+    {
+      provide: 'InboxService',
+      useClass: InboxService,
+    },
+  ],
+  exports: [
+    'IProductRepository',
+    'IProductService',
+  ],
 
 })
-export class ProductsModule {}
+export class ProductsModule { }

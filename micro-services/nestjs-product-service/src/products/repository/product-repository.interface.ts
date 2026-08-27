@@ -1,11 +1,11 @@
-import { Product } from '../product.entity';
+import { Product } from '../entity/product.entity';
 import {
     FindManyOptions,
     FindOneOptions,
     FindOptionsWhere,
 } from 'typeorm';
 
-export interface IProductRepositoryInterface {
+export interface ProductRepositoryInterface {
     findAll(options?: FindManyOptions<Product>): Promise<Product[]>;
     findById(id: number): Promise<Product | null>;
     findOne(options: FindOneOptions<Product>): Promise<Product | null>;
@@ -15,6 +15,4 @@ export interface IProductRepositoryInterface {
     update(id: number, product: Partial<Product>): Promise<Product>;
     save(data: Product): Promise<Product>;
     save(data: Product): Promise<Product>;
-    decrementQty(p: { id: number }, qty: number): Promise<void>;
-
 }

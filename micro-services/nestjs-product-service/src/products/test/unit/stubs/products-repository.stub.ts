@@ -1,21 +1,21 @@
-import { IProductRepositoryInterface } from "../../../interfaces/product-repository.interface";
-import { Product } from "../../../product.entity";
-import { FindManyOptions, FindOneOptions} from "typeorm";
-import {FindOptionsWhere} from "typeorm/find-options/FindOptionsWhere";
+import { ProductRepositoryInterface } from "../../../repository/product-repository.interface";
+import { Product } from "../../../entity/product.entity";
+import { FindManyOptions, FindOneOptions } from "typeorm";
+import { FindOptionsWhere } from "typeorm/find-options/FindOptionsWhere";
 
-export class ProductsRepositoryStub implements IProductRepositoryInterface {
+export class ProductsRepositoryStub implements ProductRepositoryInterface {
     private products: Product[] = [
         {
             id: 1,
             name: "Test Product 1",
-            qty: 10,
+            availableQty: 10,
             price: 100,
             description: "Test Desc 1"
         },
         {
             id: 2,
             name: "Test Product 2",
-            qty: 20,
+            availableQty: 20,
             price: 200,
             description: "Test Desc 2"
         },
@@ -81,15 +81,4 @@ export class ProductsRepositoryStub implements IProductRepositoryInterface {
         return updated as Product;
     }
 
-    async decrementQty(p: { id: number }, qty: number): Promise<void> {
-        const product = this.products.find(prod => prod.id === p.id);
-        if (!product) {
-            throw new Error(`Product with id ${p.id} not found`);
-        }
-        if (product.qty < qty) {
-            throw new Error(`Insufficient quantity for product with id ${p.id}`);
-        }
-
-        product.qty -= qty;
-    }
 }

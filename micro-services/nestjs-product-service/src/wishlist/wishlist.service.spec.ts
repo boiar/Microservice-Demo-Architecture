@@ -1,8 +1,8 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { WishlistService } from './wishlist.service';
-import { IWishlistRepositoryInterface } from './interfaces/wishlist-repository.interface';
+import { WishlistService } from './service/impl/wishlist.service';
+import type { IWishlistRepositoryInterface } from './repository/wishlist-repository.interface';
 import { getRepositoryToken } from '@nestjs/typeorm';
-import { Product } from '../products/product.entity';
+import { Product } from '../products/entity/product.entity';
 import { Repository } from 'typeorm';
 import { NotFoundException } from '@nestjs/common';
 
@@ -26,13 +26,13 @@ describe('WishlistService', () => {
         const module: TestingModule = await Test.createTestingModule({
             providers: [
                 WishlistService,
-                { provide: IWishlistRepositoryInterface, useValue: mockWishlistRepo },
+                { provide: 'IWishlistRepository', useValue: mockWishlistRepo },
                 { provide: getRepositoryToken(Product), useValue: mockProductRepo },
             ],
         }).compile();
 
         service = module.get<WishlistService>(WishlistService);
-        repo = module.get(IWishlistRepositoryInterface);
+        repo = module.get('IWishlistRepository');
         productRepo = module.get(getRepositoryToken(Product));
     });
 

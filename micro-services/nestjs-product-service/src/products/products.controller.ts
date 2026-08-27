@@ -1,12 +1,17 @@
-import {Controller, Get, NotFoundException, Param, ParseIntPipe, UseGuards} from '@nestjs/common';
-import {ProductsService} from "./products.service";
-import {Product} from "./product.entity";
-import {JwtAuthGuard} from "../auth/jwt-auth.guard";
+import { Controller, Get, NotFoundException, Param, ParseIntPipe, UseGuards, Logger } from '@nestjs/common';
+import { ProductsService } from "./service/impl/products.service";
+import { Product } from "./entity/product.entity";
+import { JwtAuthGuard } from "../auth/jwt-auth.guard";
+import { EventPattern, Payload } from '@nestjs/microservices';
+import { StockUpdatedEvent } from './dto/requests/stock-updated.event';
+import { ProductEvent } from './enum/product-event.enum';
 
 @Controller('products')
 export class ProductsController {
 
-    constructor(private readonly productsService: ProductsService) {}
+    private readonly logger = new Logger(ProductsController.name);
+
+    constructor(private readonly productsService: ProductsService) { }
 
     @UseGuards(JwtAuthGuard)
     @Get()
@@ -22,5 +27,16 @@ export class ProductsController {
             throw new NotFoundException(`Product with ID ${id} not found`);
         }
         return product;
+    }
+
+    @EventPattern(ProductEvent.STOCK_UPDATED)
+    async handleStockUpdated(
+        @Payload() event: StockUpdatedEvent,
+    ): Promise<void> {
+        this.logger.log(
+            `Received stock.updated event for product ${event.productId}`,
+        );
+
+        await this.productsService.handleStockUpdatedEvent(event);
     }
 }

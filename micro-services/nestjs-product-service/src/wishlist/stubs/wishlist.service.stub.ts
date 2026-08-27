@@ -1,14 +1,14 @@
-import {IWishlistInterface} from "../iwishlist.interface";
-import { Wishlist } from '../wishlist.entity';
-import { Product } from '../../products/product.entity'
+import { IWishlistServiceInterface } from '../service/iwishlist.service.interface';
+import { Wishlist } from '../entity/wishlist.entity';
+import { Product } from '../../products/entity/product.entity';
 
-export class StubWishlistService implements IWishlistInterface {
+export class StubWishlistService implements IWishlistServiceInterface {
 
     private wishlist: Wishlist[] = [
         {
             id: 1,
             user_id: 1,
-            product: { id: 101, name: 'Test Product', qty: 1, price: 50 } as Product,
+            product: { id: 101, name: 'Test Product', availableQty: 1, price: 50 } as Product,
         } as Wishlist,
     ];
 
@@ -17,7 +17,7 @@ export class StubWishlistService implements IWishlistInterface {
     }
 
     async add(userId: number, productId: number): Promise<Wishlist> {
-        const product = { id: productId, name: 'Stub Product', qty: 1, price: 100 } as Product;
+        const product = { id: productId, name: 'Stub Product', availableQty: 1, price: 100 } as Product;
         const item = { id: Date.now(), user_id: userId, product } as Wishlist;
         this.wishlist.push(item);
         return item;

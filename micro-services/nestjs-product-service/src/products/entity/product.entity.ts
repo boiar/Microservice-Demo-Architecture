@@ -15,6 +15,10 @@ export class Product {
     @Column()
     description: string;
 
-    @Column('int', { default: 0 })
-    qty: number;
+    /**
+     * Read-model projection from Inventory Service.
+     * Inventory Service is the source of truth.
+     */
+    @Column({ name: 'available_qty', type: 'int', default: 0 })
+    availableQty: number;
 }

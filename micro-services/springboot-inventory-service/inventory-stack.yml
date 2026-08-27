@@ -7,7 +7,7 @@ services:
       dockerfile: Dockerfile
     container_name: inventory-service
     env_file:
-      - .env
+      - docker.env
     ports:
       - "${SERVER_PORT}:8084"
     environment:
@@ -31,7 +31,7 @@ services:
     container_name: inventory-postgres
     restart: unless-stopped
     env_file:
-      - .env
+      - docker.env
     environment:
       POSTGRES_DB: ${DB_NAME}
       POSTGRES_USER: ${DB_USERNAME}

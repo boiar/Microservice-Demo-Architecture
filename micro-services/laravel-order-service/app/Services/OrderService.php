@@ -14,7 +14,6 @@ use App\DTOs\CreateOrderDTO;
 use App\Helpers\JwtHelper;
 use App\Helpers\ResponseHelper;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Redis;
 
 class OrderService implements IOrderService
 {

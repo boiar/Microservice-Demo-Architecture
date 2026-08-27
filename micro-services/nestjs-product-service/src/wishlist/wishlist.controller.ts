@@ -1,12 +1,15 @@
-import {Controller, Delete, Get, Param, Post, Req, UseGuards} from "@nestjs/common";
-import {AuthGuard} from "@nestjs/passport";
-import {WishlistService} from "./wishlist.service";
+import { Controller, Delete, Get, Inject, Param, Post, Req, UseGuards } from '@nestjs/common';
+import { AuthGuard } from '@nestjs/passport';
+import { IWishlistServiceInterface } from './service/iwishlist.service.interface';
 
 @UseGuards(AuthGuard('jwt'))
 @Controller('wishlist')
 export class WishlistController {
 
-    constructor(private readonly wishlistService: WishlistService) {}
+    constructor(
+        @Inject('IWishlistService')
+        private readonly wishlistService: IWishlistServiceInterface,
+    ) {}
 
 
     @Get()

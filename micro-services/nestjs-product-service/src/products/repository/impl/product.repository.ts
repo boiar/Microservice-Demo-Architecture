@@ -2,15 +2,15 @@ import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, FindOneOptions, FindManyOptions } from 'typeorm';
 import { FindOptionsWhere } from 'typeorm/find-options/FindOptionsWhere';
-import { Product } from './product.entity';
-import { IProductRepositoryInterface } from './interfaces/product-repository.interface';
+import { Product } from '../../entity/product.entity';
+import { ProductRepositoryInterface } from '../product-repository.interface';
 
 @Injectable()
-export class ProductRepository implements IProductRepositoryInterface {
+export class ProductRepository implements ProductRepositoryInterface {
     constructor(
         @InjectRepository(Product)
         private readonly repo: Repository<Product>,
-    ) {}
+    ) { }
 
     findAll(options?: FindManyOptions<Product>): Promise<Product[]> {
         return this.repo.find(options);
@@ -47,9 +47,7 @@ export class ProductRepository implements IProductRepositoryInterface {
         return this.repo.save(data);
     }
 
-    async decrementQty(p: { id: number }, qty: number): Promise<void> {
-        await this.repo.decrement({ id: p.id }, 'qty', qty);
-    }
+
 
 
 

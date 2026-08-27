@@ -1,5 +1,5 @@
-import {Column, Entity, ManyToOne, PrimaryGeneratedColumn, Unique} from "typeorm";
-import {Product} from "../products/product.entity";
+import { Column, Entity, ManyToOne, PrimaryGeneratedColumn, Unique } from "typeorm";
+import { Product } from "../../products/entity/product.entity";
 
 @Entity()
 @Unique(['user_id', 'product'])
