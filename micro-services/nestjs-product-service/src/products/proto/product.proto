@@ -1,0 +1,34 @@
+syntax = "proto3";
+
+package products;
+
+// Provides operations for product.
+service ProductService {
+
+    // Retrieves a product by its unique identifier.
+    rpc GetProductById (ProductByIdRequest) returns (ProductResponse) {}
+
+    // Retrieves multiple products by their unique identifiers.
+    rpc GetProductsByIds (ProductsByIdsRequest) returns (ProductsByIdsResponse) {}
+}
+
+message ProductByIdRequest {
+    int32 id = 1;
+}   
+
+message ProductsByIdsRequest {
+    repeated int32 ids = 1;
+}
+
+message ProductsByIdsResponse {
+    repeated ProductResponse products = 1;
+}
+
+message ProductResponse {
+    int32 id = 1;
+    string name = 2;
+    string description = 3;
+    float price = 4;
+    int32 available_qty = 5;
+}
+

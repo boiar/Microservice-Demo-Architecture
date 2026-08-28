@@ -1,0 +1,5 @@
+export enum StockUpdatedEventType {
+    PRODUCT_DELETED = 'PRODUCT_DELETED',
+    PRODUCT_OUT_OF_STOCK = 'PRODUCT_OUT_OF_STOCK',
+
+}

@@ -1,0 +1,215 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: api-gateway
+
+  data:
+    redis:
+      host: ${REDIS_HOST:redis}
+      port: ${REDIS_PORT:6379}
+      password: ${REDIS_PASSWORD:}
+
+  cloud:
+    gateway:
+      server:
+        webflux:
+          # Global filters
+          default-filters:
+            - DedupeResponseHeader=Access-Control-Allow-Origin
+
+          # CORS
+          globalcors:
+            cors-configurations:
+              '[/**]':
+                allowedOrigins: ${CORS_ALLOWED_ORIGINS:http://localhost:3000}
+                allowedMethods:
+                  - GET
+                  - POST
+                  - PUT
+                  - PATCH
+                  - DELETE
+                  - OPTIONS
+                allowedHeaders:
+                  - "*"
+                allowCredentials: true
+
+          # Routes
+          routes:
+
+            # USER SERVICE
+            - id: user-service
+              uri: ${USER_SERVICE_URL:http://laravel-user-service:8000}
+              predicates:
+                - Path=/api/users/**
+              filters:
+                - name: RequestRateLimiter
+                  args:
+                    redis-rate-limiter.replenishRate: 20
+                    redis-rate-limiter.burstCapacity: 40
+                    key-resolver: "#{@ipKeyResolver}"
+
+            # PRODUCT SERVICE
+            - id: product-service
+              uri: ${PRODUCT_SERVICE_URL:http://nest-product-service:3000}
+              predicates:
+                - Path=/api/products/**
+              filters:
+                - name: RequestRateLimiter
+                  args:
+                    redis-rate-limiter.replenishRate: 30
+                    redis-rate-limiter.burstCapacity: 60
+                    key-resolver: "#{@ipKeyResolver}"
+
+                - name: CircuitBreaker
+                  args:
+                    name: productServiceCB
+                    fallbackUri: forward:/fallback/product
+
+            # ORDER SERVICE
+            - id: order-service
+              uri: ${ORDER_SERVICE_URL:http://laravel-order-service:8001}
+              predicates:
+                - Path=/api/orders/**
+              filters:
+                - name: RequestRateLimiter
+                  args:
+                    redis-rate-limiter.replenishRate: 20
+                    redis-rate-limiter.burstCapacity: 40
+                    key-resolver: "#{@ipKeyResolver}"
+
+                - name: CircuitBreaker
+                  args:
+                    name: orderServiceCB
+                    fallbackUri: forward:/fallback/order
+
+            # PAYMENT SERVICE
+            - id: payment-service
+              uri: ${PAYMENT_SERVICE_URL:http://springboot-payment-service:8082}
+              predicates:
+                - Path=/api/payments/**
+              filters:
+                - name: RequestRateLimiter
+                  args:
+                    redis-rate-limiter.replenishRate: 10
+                    redis-rate-limiter.burstCapacity: 20
+                    key-resolver: "#{@ipKeyResolver}"
+
+                - name: CircuitBreaker
+                  args:
+                    name: paymentServiceCB
+                    fallbackUri: forward:/fallback/payment
+
+            # INVENTORY SERVICE
+            - id: inventory-service
+              uri: ${INVENTORY_SERVICE_URL:http://springboot-inventory-service:8083}
+              predicates:
+                - Path=/api/inventory/**
+              filters:
+                - name: RequestRateLimiter
+                  args:
+                    redis-rate-limiter.replenishRate: 20
+                    redis-rate-limiter.burstCapacity: 40
+                    key-resolver: "#{@ipKeyResolver}"
+
+                - name: CircuitBreaker
+                  args:
+                    name: inventoryServiceCB
+                    fallbackUri: forward:/fallback/inventory
+
+            # NOTIFICATION SERVICE
+            - id: notification-service
+              uri: ${NOTIFICATION_SERVICE_URL:http://nest-notification-service:3001}
+              predicates:
+                - Path=/api/notifications/**
+              filters:
+                - name: RequestRateLimiter
+                  args:
+                    redis-rate-limiter.replenishRate: 20
+                    redis-rate-limiter.burstCapacity: 40
+                    key-resolver: "#{@ipKeyResolver}"
+
+
+# CUSTOM APPLICATION CONFIG
+jwt:
+  secret: ${JWT_SECRET:change-me-to-a-long-random-shared-secret}
+
+  public-paths:
+    - /api/users/login
+    - /api/users/register
+    - /api/users/refresh
+    - /actuator/**
+    - /fallback/**
+
+
+# RESILIENCE4J
+resilience4j:
+
+  circuitbreaker:
+    instances:
+
+      productServiceCB:
+        slidingWindowSize: 10
+        minimumNumberOfCalls: 5
+        failureRateThreshold: 50
+        waitDurationInOpenState: 10s
+        permittedNumberOfCallsInHalfOpenState: 3
+
+      orderServiceCB:
+        slidingWindowSize: 10
+        minimumNumberOfCalls: 5
+        failureRateThreshold: 50
+        waitDurationInOpenState: 10s
+        permittedNumberOfCallsInHalfOpenState: 3
+
+      paymentServiceCB:
+        slidingWindowSize: 10
+        minimumNumberOfCalls: 5
+        failureRateThreshold: 50
+        waitDurationInOpenState: 10s
+        permittedNumberOfCallsInHalfOpenState: 3
+
+      inventoryServiceCB:
+        slidingWindowSize: 10
+        minimumNumberOfCalls: 5
+        failureRateThreshold: 50
+        waitDurationInOpenState: 10s
+        permittedNumberOfCallsInHalfOpenState: 3
+
+  timelimiter:
+    instances:
+
+      productServiceCB:
+        timeoutDuration: 5s
+
+      orderServiceCB:
+        timeoutDuration: 5s
+
+      paymentServiceCB:
+        timeoutDuration: 5s
+
+      inventoryServiceCB:
+        timeoutDuration: 5s
+
+
+# ACTUATOR
+management:
+  endpoints:
+    web:
+      exposure:
+        include:
+          - health
+          - info
+          - gateway
+
+  endpoint:
+    health:
+      show-details: when_authorized
+
+
+# LOGGING
+logging:
+  level:
+    org.springframework.cloud.gateway: TRACE
+    com.example.gateway: DEBUG

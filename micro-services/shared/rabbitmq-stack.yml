@@ -1,0 +1,39 @@
+version: '3.9'
+
+
+# Management UI:  http://localhost:15672  (user: admin / pass: admin  -- override via .env)
+# AMQP endpoint:  amqp://localhost:5672
+
+services:
+  micro-service-rabbitmq:
+    image: rabbitmq:4-management
+    container_name: micro-service-rabbitmq
+    hostname: rabbitmq
+    restart: unless-stopped
+    env_file:
+      - docker.env
+    environment:
+      RABBITMQ_DEFAULT_USER: ${RABBITMQ_USER:-admin}
+      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PASS:-admin}
+    ports:
+      - "5672:5672"   # AMQP
+      - "15672:15672" # Management UI
+    volumes:
+      - ./rabbitmq/rabbitmq.conf:/etc/rabbitmq/conf.d/10-defaults.conf:ro
+      - ./rabbitmq/definitions.json:/etc/rabbitmq/definitions.json:ro
+      - rabbitmq-data:/var/lib/rabbitmq
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
+      interval: 10s
+      timeout: 10s
+      retries: 5
+    networks:
+      - app-network
+
+networks:
+  app-network:
+    external: true
+
+volumes:
+  rabbitmq-data:
+    name: rabbitmq-data

@@ -1,0 +1,42 @@
+{
+  "rabbit_version": "4",
+  "users": [],
+  "vhosts": [
+    {
+      "name": "/"
+    }
+  ],
+  "permissions": [],
+  "parameters": [],
+  "policies": [],
+  "queues": [
+    {
+      "name": "example_queue",
+      "vhost": "/",
+      "durable": true,
+      "auto_delete": false,
+      "arguments": {}
+    }
+  ],
+  "exchanges": [
+    {
+      "name": "example_exchange",
+      "vhost": "/",
+      "type": "direct",
+      "durable": true,
+      "auto_delete": false,
+      "internal": false,
+      "arguments": {}
+    }
+  ],
+  "bindings": [
+    {
+      "source": "example_exchange",
+      "vhost": "/",
+      "destination": "example_queue",
+      "destination_type": "queue",
+      "routing_key": "example_routing_key",
+      "arguments": {}
+    }
+  ]
+}

@@ -1,0 +1,45 @@
+FROM php:8.3-fpm-alpine
+
+# Install system dependencies and PHP extensions
+RUN apk add --no-cache \
+    build-base \
+    zip \
+    unzip \
+    git \
+    mysql-client \
+    autoconf \
+    bash \
+    linux-headers \
+    libpng-dev \
+    libjpeg-turbo-dev \
+    libwebp-dev \
+    libxpm-dev \
+    freetype-dev \
+    && pecl install redis grpc protobuf \
+    && docker-php-ext-enable redis grpc protobuf \
+    && docker-php-ext-install pdo pdo_mysql sockets opcache
+
+# Install Composer globally
+COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
+
+# Set correct working directory
+WORKDIR /var/www
+
+# Copy composer files first
+COPY composer.json composer.lock ./
+
+# Install dependencies
+RUN composer install --no-dev --optimize-autoloader --no-scripts
+
+# Copy the rest of the Laravel application
+COPY . .
+
+# Set permissions
+RUN chown -R www-data:www-data /var/www/storage \
+    && chown -R www-data:www-data /var/www/bootstrap/cache \
+    && chmod -R 775 /var/www/storage \
+    && chmod -R 775 /var/www/bootstrap/cache
+
+EXPOSE 8000
+
+CMD ["php", "artisan", "serve", "--host=0.0.0.0", "--port=8000"]

@@ -1,0 +1,55 @@
+version: "3.8"
+
+services:
+  payment-service:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: payment-service
+    env_file:
+      - docker.env
+    ports:
+      - "${SERVER_PORT}:8085"
+    environment:
+      DB_HOST: ${DB_HOST}
+      DB_PORT: ${DB_PORT}
+      DB_NAME: ${DB_NAME}
+      DB_USERNAME: ${DB_USERNAME}
+      DB_PASSWORD: ${DB_PASSWORD}
+
+      RABBITMQ_HOST: ${RABBITMQ_HOST}
+      RABBITMQ_PORT: ${RABBITMQ_PORT}
+      RABBITMQ_USERNAME: ${RABBITMQ_USERNAME}
+      RABBITMQ_PASSWORD: ${RABBITMQ_PASSWORD}
+    depends_on:
+      - postgres
+
+    networks:
+      - app-network
+
+  postgres:
+    image: postgres:17
+    container_name: payment-postgres
+    restart: unless-stopped
+    env_file:
+      - docker.env
+    environment:
+      POSTGRES_USER: ${DB_USERNAME}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_DB: ${DB_NAME}
+    ports:
+      - "${DB_PORT:-5433}:5432"
+    volumes:
+      - payment_postgres_data:/var/lib/postgresql/data
+    networks:
+      - app-network
+
+
+
+volumes:
+  payment_postgres_data:
+
+networks:
+  app-network:
+    external: true
+    name: app-network
