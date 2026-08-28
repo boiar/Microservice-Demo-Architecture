@@ -7,6 +7,7 @@ import { IProductInterface } from "../product.interface";
 import { ProductRepositoryInterface } from "../../repository/product-repository.interface";
 import { StockUpdatedEvent } from 'src/products/dto/requests/stock-updated.event';
 import { InboxInterface } from '../inbox.interface';
+import { ProductResponse } from 'src/products/dto/responses/product-response.dto';
 
 
 @Injectable()
@@ -30,24 +31,41 @@ export class ProductsService implements IProductInterface {
     }
 
 
-    async findAll(): Promise<Product[]> {
+    async findAll(): Promise<ProductResponse[]> {
         const cacheKey = 'products:all';
-        const cached = await this.cacheManager.get<Product[]>(cacheKey);
+        const cached = await this.cacheManager.get<ProductResponse[]>(cacheKey);
         if (cached) {
             return cached;
         }
 
         const products = await this.productRepository.findAll();
+        const response = ProductResponse.fromEntities(products);
         await this.cacheManager.set(
             cacheKey,
             products,
             3600
         ); // Cache for 1 hour
-        return products;
+        return response;
     }
 
-    async findOne(id: number): Promise<Product> {
-        return this.productRepository.findOneBy({ id });
+    async findOne(id: number): Promise<ProductResponse> {
+        const product = await this.productRepository.findOneBy({ id });
+        if (!product) {
+            return null;
+        }
+        return ProductResponse.fromEntity(product);
+    }
+
+    async findByIds(ids: number[]): Promise<ProductResponse[]> {
+        if (!ids || ids.length === 0) {
+            return [];
+        }
+        const products = await this.productRepository.findAll({
+            where: {
+                id: In(ids)
+            }
+        });
+        return ProductResponse.fromEntities(products);
     }
 
     async handleStockUpdatedEvent(event: StockUpdatedEvent): Promise<void> {

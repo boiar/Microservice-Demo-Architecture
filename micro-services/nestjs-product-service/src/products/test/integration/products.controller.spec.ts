@@ -1,4 +1,4 @@
-import { ProductsController } from "../../products.controller";
+import { ProductsController } from "../../controller/products.controller";
 import { ProductsService } from "../../service/impl/products.service";
 import { IProductInterface } from "../../service/product.interface";
 import { Test, TestingModule } from "@nestjs/testing";

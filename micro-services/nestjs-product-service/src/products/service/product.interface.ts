@@ -1,11 +1,13 @@
 import { StockUpdatedEvent } from "../dto/requests/stock-updated.event";
-import { Product } from "../entity/product.entity";
+import { ProductResponse } from "../dto/responses/product-response.dto";
 
 export interface IProductInterface {
 
-    findAll(): Promise<Product[]>;
+    findAll(): Promise<ProductResponse[]>;
 
-    findOne(id: number): Promise<Product>;
+    findOne(id: number): Promise<ProductResponse>;
+
+    findByIds(ids: number[]): Promise<ProductResponse[]>;
 
     handleStockUpdatedEvent(stockUpdatedEvent: StockUpdatedEvent): Promise<void>;
 }

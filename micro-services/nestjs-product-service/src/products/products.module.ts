@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 import { ProductsService } from './service/impl/products.service';
-import { ProductsController } from './products.controller';
+import { ProductsController } from './controller/products.controller';
+import { ProductGrpcController } from './controller/product-grpc.controller';
 import { TypeOrmModule } from "@nestjs/typeorm";
 import { Product } from "./entity/product.entity";
 import { AuthModule } from "../auth/auth.module";
@@ -31,7 +32,7 @@ import { InboxService } from './service/impl/inbox.service';
     ]),
     AuthModule,
   ],
-  controllers: [ProductsController],
+  controllers: [ProductsController, ProductGrpcController],
   providers: [
     {
       provide: 'ProductRepository',

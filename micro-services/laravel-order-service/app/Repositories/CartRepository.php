@@ -12,16 +12,13 @@ class CartRepository implements ICartRepository
 {
     public function getUserCartItems(int $userId): Collection
     {
-/*        $userId = JwtHelper::getUserIdFromToken();*/
-
         return Cart::select(
-            'carts.id as cart_id',
-            'carts.quantity',
-            'products.id as product_id',
-            'products.name as product_name',
-            'products.price',
-        )->join('products', 'carts.product_id', '=', 'products.id')
-         ->where('carts.user_id', $userId)
+            'id as cart_id',
+            'product_id',
+            'quantity',
+            'product_name',
+            'price',
+        )->where('user_id', $userId)
          ->get();
     }
 
@@ -57,8 +54,8 @@ class CartRepository implements ICartRepository
 
     public function getCartTotal(int $userId): float
     {
-        return Cart::where('user_id', $userId)
-                   ->join('products', 'carts.product_id', '=', 'products.id')
-                   ->sum(DB::raw('carts.quantity * products.price'));
+        return (float) Cart::where('user_id', $userId)
+                           ->selectRaw('SUM(quantity * price) as total')
+                           ->value('total');
     }
 }

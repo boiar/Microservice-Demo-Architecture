@@ -3,36 +3,34 @@
 namespace App\Services;
 
 use App\Contracts\Repositories\ICartRepository;
-use App\Contracts\Repositories\IProductRepository;
 use App\Contracts\Services\ICartService;
 use App\Contracts\Services\IJwtService;
+use App\Contracts\Services\IProductGrpcService;
 use App\DTOs\AddItemToCartDTO;
 use App\Helpers\ResponseHelper;
 
 class CartService implements ICartService
 {
     protected ICartRepository $cartRepo;
-    protected IProductRepository $productRepo;
+    protected IProductGrpcService $productGrpc;
     protected IJwtService $jwtService;
 
 
     public function __construct(
         ICartRepository $cartRepo,
-        IProductRepository $productRepo,
+        IProductGrpcService $productGrpc,
         IJwtService $jwtService
     )
     {
         $this->cartRepo = $cartRepo;
-        $this->productRepo = $productRepo;
+        $this->productGrpc = $productGrpc;
         $this->jwtService = $jwtService;
     }
 
     public function getCartItems(): object
     {
         $userId    = $this->jwtService->getUserIdFromToken();
-
         $cartItems = $this->cartRepo->getUserCartItems($userId);
-
         return ResponseHelper::returnData($cartItems);
     }
 
@@ -40,8 +38,7 @@ class CartService implements ICartService
     {
         $userId = $this->jwtService->getUserIdFromToken();
 
-
-        $product = $this->productRepo->findById($dto->getProductId());
+        $product = $this->productGrpc->getProductById($dto->getProductId());
         if (!$product) {
             return ResponseHelper::returnError(404, 'Invalid product');
         }
@@ -49,26 +46,30 @@ class CartService implements ICartService
         $existingItem = $this->cartRepo->findUserCartItem($userId, $dto->getProductId());
 
         $requestedQty = $dto->getQuantity();
-        $existingQty  = $existingItem ? $existingItem->quantity : 0;
-        $totalQty     = $requestedQty + $existingQty;
-
-        if ($totalQty > $product->qty) {
-            return ResponseHelper::returnError(400, 'Quantity exceeds available stock.');
-        }
 
         if ($existingItem) {
-            $this->cartRepo->updateQuantity($existingItem, $totalQty);
+            $newQty = $existingItem->quantity + $requestedQty;
+
+            $this->cartRepo->updateQuantity($existingItem, $newQty);
+
+            // Refresh snapshot in case price changed since it was first added
+            $this->cartRepo->update($existingItem->id, [
+                'product_name' => $product->name,
+                'price'        => $product->price,
+            ]);
+
             return ResponseHelper::returnSuccessMessage('Item added to cart', 201);
         }
 
         $this->cartRepo->create([
-            'user_id'    => $userId,
-            'product_id' => $dto->getProductId(),
-            'quantity'   => $requestedQty,
+            'user_id'      => $userId,
+            'product_id'   => $dto->getProductId(),
+            'quantity'     => $requestedQty,
+            'product_name' => $product->name,
+            'price'        => $product->price,
         ]);
 
-        return ResponseHelper::returnSuccessMessage('Item added to cart', 201);
-    }
+        return ResponseHelper::returnSuccessMessage('Item added to cart', 201);    }
 
     public function removeFromCart(int $itemId): object
     {

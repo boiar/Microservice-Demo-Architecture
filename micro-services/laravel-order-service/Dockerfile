@@ -15,8 +15,8 @@ RUN apk add --no-cache \
     libwebp-dev \
     libxpm-dev \
     freetype-dev \
-    && pecl install redis \
-    && docker-php-ext-enable redis \
+    && pecl install redis grpc protobuf \
+    && docker-php-ext-enable redis grpc protobuf \
     && docker-php-ext-install pdo pdo_mysql sockets opcache
 
 # Install Composer globally

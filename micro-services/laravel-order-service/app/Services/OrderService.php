@@ -6,7 +6,6 @@ namespace App\Services;
 use App\Contracts\Repositories\ICartRepository;
 use App\Contracts\Repositories\IOrderItemRepository;
 use App\Contracts\Repositories\IOrderRepository;
-use App\Contracts\Repositories\IProductRepository;
 use App\Contracts\Services\IJwtService;
 use App\Contracts\Services\IOrderService;
 use App\Contracts\Services\IRabbitMQService;
@@ -20,7 +19,6 @@ class OrderService implements IOrderService
     protected IOrderRepository $orderRepo;
     protected IOrderItemRepository $orderItemRepo;
     protected ICartRepository $cartRepo;
-    protected IProductRepository $productRepo;
     protected IJwtService $jwtService;
     protected IRabbitMQService $rabbitMQService;
 
@@ -29,14 +27,12 @@ class OrderService implements IOrderService
         IOrderRepository $orderRepo,
         IOrderItemRepository $orderItemRepo,
         ICartRepository $cartRepo,
-        IProductRepository $productRepo,
         IJwtService $jwtService,
         IRabbitMQService $rabbitMQService
     ) {
         $this->orderRepo      = $orderRepo;
         $this->orderItemRepo  = $orderItemRepo;
         $this->cartRepo       = $cartRepo;
-        $this->productRepo    = $productRepo;
         $this->jwtService    = $jwtService;
         $this->rabbitMQService = $rabbitMQService;
     }
@@ -89,33 +85,18 @@ class OrderService implements IOrderService
                   'total_price' => 0,
             ]);
 
-            $productIds = $cartItems->pluck('product_id')->toArray();
-            $products   = $this->productRepo->findByIdsWithLock($productIds);
             $totalPrice = 0;
             $data       = [];
 
             foreach ($cartItems as $item) {
-                $product = $products->get($item->product_id);
-
-                if (!$product) {
-                    throw new \Exception("Product not found.");
-                }
-
-                if ($product->qty < $item->quantity) {
-                    throw new \Exception("Insufficient quantity for product: {$product->name}");
-                }
-
-                $product->qty -= $item->quantity;
-                $this->productRepo->update($product->id, ['qty' => $product->qty]);
-
-                $lineTotal = $product->price * $item->quantity;
+                $lineTotal = $item->price * $item->quantity;
                 $totalPrice += $lineTotal;
 
                 $data[] = [
                     'order_id'   => $order->id,
                     'product_id' => $item->product_id,
                     'quantity'   => $item->quantity,
-                    'price'      => $product->price,
+                    'price'      => $item->price,
                     'created_at' => now(),
                     'updated_at' => now(),
                 ];
